@@ -1,32 +1,48 @@
-name: 🤖 Daily Betting Bot
+name: Betting Bot
 
 on:
   schedule:
-    - cron: '0 9 * * *'  # Every day at 09:00 UTC
-  workflow_dispatch:       # Manual trigger from GitHub UI
+    - cron: '0 9 * * *'    # 09:00 UTC — run bot + place bets
+    - cron: '0 7 * * *'    # 07:00 UTC — daily preview (upcoming matches)
+    - cron: '0 20 * * 0'   # 20:00 UTC Sunday — weekly report
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to run'
+        required: true
+        default: 'bot'
+        type: choice
+        options:
+          - bot
+          - preview
+          - report_daily
+          - report_weekly
+          - report_monthly
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'bot' || github.event.schedule == '0 9 * * *'
 
     steps:
-      - name: 📥 Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Chrome
         run: |
-          pip install -r requirements.txt
-          pip install webdriver-manager
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update -q
+          sudo apt-get install -y google-chrome-stable
 
-      - name: 🌐 Install Chrome
-        run: sudo apt-get install -y google-chrome-stable
-
-      - name: 🤖 Run betting bot
+      - name: Run betting bot
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
@@ -36,44 +52,60 @@ jobs:
           UNIBET_PASSWORD: ${{ secrets.UNIBET_PASSWORD }}
         run: python bot.py
 
-      - name: 📁 Upload last slip
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: last-slip
-          path: last_slip.json
-          if-no-files-found: ignore
-
-      - name: 📸 Upload error screenshot
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: error-screenshot
-          path: error_screenshot.png
-          if-no-files-found: ignore
-
-  telegram-bot:
+  run-preview:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'preview' || github.event.schedule == '0 7 * * *'
 
     steps:
-      - name: 📥 Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: 💬 Run Telegram Interface (5 min)
+      - name: Send daily preview
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python upcoming.py
+
+  run-report:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_dispatch' && 
+       contains(fromJson('["report_daily","report_weekly","report_monthly"]'), github.event.inputs.action)) ||
+      github.event.schedule == '0 20 * * 0'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send analytics report
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-          UNIBET_USERNAME: ${{ secrets.UNIBET_USERNAME }}
-          UNIBET_PASSWORD: ${{ secrets.UNIBET_PASSWORD }}
-        run: timeout 300 python telegram_interface.py || true
+        run: |
+          ACTION="${{ github.event.inputs.action || 'report_weekly' }}"
+          PERIOD="${ACTION#report_}"
+          python -c "
+          from analytics import generate_telegram_report
+          import requests, os
+          report = generate_telegram_report('$PERIOD')
+          requests.post(
+            f\"https://api.telegram.org/bot{os.environ['TELEGRAM_TOKEN']}/sendMessage\",
+            json={'chat_id': os.environ['TELEGRAM_CHAT_ID'], 'text': report, 'parse_mode': 'Markdown'}
+          )
+          print('Report sent.')
+          "
