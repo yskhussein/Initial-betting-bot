@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetBot Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #c8f135;
+    --accent2: #ff4d4d;
+    --accent3: #4daaff;
+    --text: #f0f0f0;
+    --muted: #666;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 4px;
+    color: var(--accent);
+  }
+
+  .logo span { color: var(--text); }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border);
+    border-top: none;
+    margin-bottom: 32px;
+  }
+
+  .stat {
+    padding: 24px;
+    border-right: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat:last-child { border-right: none; }
+
+  .stat::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 2px;
+    background: var(--accent);
+    width: 0;
+    transition: width 1s ease;
+  }
+
+  .stat.loaded::before { width: 100%; }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .stat-value.green { color: var(--accent); }
+  .stat-value.red { color: var(--accent2); }
+  .stat-value.blue { color: var(--accent3); }
+
+  .stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Main grid */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  /* Panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .panel-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .panel-body { padding: 24px; }
+
+  /* Today's slip */
+  .slip-leg {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    animation: slideIn 0.4s ease forwards;
+    opacity: 0;
+  }
+
+  .slip-leg:last-child { border-bottom: none; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .leg-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--border);
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .leg-info { flex: 1; }
+
+  .leg-match {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .leg-bet {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .leg-odds {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent);
+  }
+
+  .leg-conf {
+    text-align: right;
+    width: 60px;
+  }
+
+  .conf-bar {
+    height: 3px;
+    background: var(--border);
+    margin-top: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .conf-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--accent);
+    transition: width 1s ease;
+  }
+
+  .conf-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* Slip footer */
+  .slip-footer {
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    text-align: center;
+  }
+
+  .slip-footer-item label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .slip-footer-item span {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    color: var(--accent);
+  }
+
+  /* Controls panel */
+  .control-btn {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .control-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(200,241,53,0.05);
+  }
+
+  .control-btn.primary {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+
+  .control-btn.primary:hover {
+    background: #b8e120;
+    color: #000;
+  }
+
+  .control-btn.danger {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  .control-btn.danger:hover {
+    background: rgba(255,77,77,0.1);
+  }
+
+  .btn-icon { font-size: 16px; }
+
+  /* Settings form */
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .setting-row:last-child { border-bottom: none; }
+
+  .setting-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .setting-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    width: 100px;
+    text-align: right;
+    transition: border-color 0.2s;
+  }
+
+  .setting-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .save-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .save-btn:hover { background: rgba(200,241,53,0.1); }
+
+  /* History table */
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .history-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-table td {
+    padding: 14px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-table tr:last-child td { border-bottom: none; }
+
+  .history-table tr:hover td { background: var(--surface2); }
+
+  .badge {
+    padding: 3px 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .badge.win { background: rgba(200,241,53,0.15); color: var(--accent); }
+  .badge.loss { background: rgba(255,77,77,0.15); color: var(--accent2); }
+  .badge.pending { background: rgba(77,170,255,0.15); color: var(--accent3); }
+
+  /* P&L Chart */
+  .chart-container {
+    height: 120px;
+    position: relative;
+    margin-top: 8px;
+  }
+
+  canvas { width: 100% !important; height: 100% !important; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    padding: 16px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    z-index: 1000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Trigger animation */
+  .trigger-running {
+    animation: borderFlash 0.5s infinite;
+  }
+
+  @keyframes borderFlash {
+    0%, 100% { border-color: var(--accent); }
+    50% { border-color: transparent; }
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(2) { border-right: none; }
+    .stat:nth-child(3) { border-top: 1px solid var(--border); }
+    .stat:nth-child(4) { border-top: 1px solid var(--border); border-right: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header>
+    <div class="logo">BET<span>BOT</span></div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <div class="status-pill">
+        <div class="status-dot"></div>
+        <span>BOT ACTIVE</span>
+      </div>
+      <div class="status-pill" style="color:#666;">
+        <span id="clock">--:--:--</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat" id="s1">
+      <div class="stat-label">Total Bets</div>
+      <div class="stat-value">24</div>
+      <div class="stat-sub">This month</div>
+    </div>
+    <div class="stat" id="s2">
+      <div class="stat-label">Win Rate</div>
+      <div class="stat-value green">38%</div>
+      <div class="stat-sub">9 wins / 24 bets</div>
+    </div>
+    <div class="stat" id="s3">
+      <div class="stat-label">Net P&L</div>
+      <div class="stat-value green">+€47.30</div>
+      <div class="stat-sub">Since launch</div>
+    </div>
+    <div class="stat" id="s4">
+      <div class="stat-label">Today's Slip</div>
+      <div class="stat-value blue">5-FOLD</div>
+      <div class="stat-sub">Odds: 18.40</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+
+    <!-- Left: Today's slip -->
+    <div>
+      <div class="panel" style="margin-bottom:24px;">
+        <div class="panel-header">
+          <span class="panel-title">Today's Slip</span>
+          <span style="font-family:'Space Mono',monospace;font-size:10px;color:#666;">09 MAR 2026</span>
+        </div>
+        <div class="panel-body" id="slip-container">
+          <!-- Legs injected by JS -->
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Bet History</span>
+          <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);">VIEW ALL</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Legs</th>
+                <th>Odds</th>
+                <th>Stake</th>
+                <th>Return</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Controls + Settings + Chart -->
+    <div>
+
+      <!-- Controls -->
+      <div class="panel" style="margin-bottom:24px;">
+        <div class="panel-header">
+          <span class="panel-title">Controls</span>
+        </div>
+        <div class="panel-body">
+          <button class="control-btn primary" onclick="triggerBot()">
+            <span class="btn-icon">▶</span> RUN BOT NOW
+          </button>
+          <button class="control-btn" onclick="refreshSlip()">
+            <span class="btn-icon">↻</span> REFRESH SLIP
+          </button>
+          <button class="control-btn danger" onclick="stopBot()">
+            <span class="btn-icon">■</span> PAUSE BOT
+          </button>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="panel" style="margin-bottom:24px;">
+        <div class="panel-header">
+          <span class="panel-title">Settings</span>
+        </div>
+        <div class="panel-body">
+          <div class="setting-row">
+            <span class="setting-label">STAKE (€)</span>
+            <input type="number" class="setting-input" id="stake" value="1.00" step="0.50" min="0.50">
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">MAX LEGS</span>
+            <input type="number" class="setting-input" id="maxLegs" value="5" min="2" max="12">
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">MIN ODDS</span>
+            <input type="number" class="setting-input" id="minOdds" value="1.40" step="0.10">
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">MIN CONFIDENCE</span>
+            <input type="number" class="setting-input" id="minConf" value="40" min="10" max="90">
+          </div>
+          <button class="save-btn" onclick="saveSettings()">SAVE SETTINGS</button>
+        </div>
+      </div>
+
+      <!-- P&L Chart -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">P&L Chart</span>
+          <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);">+€47.30</span>
+        </div>
+        <div class="panel-body">
+          <div class="chart-container">
+            <canvas id="plChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toUTCString().slice(17, 25) + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Animate stats ──
+setTimeout(() => {
+  document.querySelectorAll('.stat').forEach(s => s.classList.add('loaded'));
+}, 300);
+
+// ── Today's slip data (replace with real API call) ──
+const slip = {
+  date: "2026-03-09",
+  legs: [
+    { match: "Bologna vs Hellas Verona", bet: "HOME WIN", odds: 1.55, confidence: 72 },
+    { match: "RC Lens vs Metz", bet: "UNDER 2.5", odds: 2.47, confidence: 68 },
+    { match: "Lille vs Lorient", bet: "HOME WIN", odds: 1.57, confidence: 65 },
+    { match: "Fiorentina vs Parma", bet: "BTTS YES", odds: 1.82, confidence: 61 },
+    { match: "AC Milan vs Inter", bet: "BTTS YES", odds: 1.72, confidence: 58 },
+  ],
+  stake: 1.00,
+};
+
+function renderSlip() {
+  const container = document.getElementById('slip-container');
+  let combinedOdds = slip.legs.reduce((acc, l) => acc * l.odds, 1);
+  let html = '';
+
+  slip.legs.forEach((leg, i) => {
+    html += `
+      <div class="slip-leg" style="animation-delay:${i * 0.1}s">
+        <div class="leg-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="leg-info">
+          <div class="leg-match">${leg.match}</div>
+          <div class="leg-bet">${leg.bet}</div>
+        </div>
+        <div class="leg-odds">${leg.odds.toFixed(2)}</div>
+        <div class="leg-conf">
+          <div class="conf-label">${leg.confidence}%</div>
+          <div class="conf-bar">
+            <div class="conf-fill" style="width:${leg.confidence}%"></div>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  html += `
+    <div class="slip-footer">
+      <div class="slip-footer-item"><label>Combined Odds</label><span>${combinedOdds.toFixed(2)}</span></div>
+      <div class="slip-footer-item"><label>Stake</label><span>€${slip.stake.toFixed(2)}</span></div>
+      <div class="slip-footer-item"><label>Potential</label><span>€${(combinedOdds * slip.stake).toFixed(2)}</span></div>
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+renderSlip();
+
+// ── History data ──
+const history = [
+  { date: "08 MAR", legs: 5, odds: 18.40, stake: 1.00, ret: 0, status: "pending" },
+  { date: "07 MAR", legs: 5, odds: 12.30, stake: 1.00, ret: 0, status: "loss" },
+  { date: "06 MAR", legs: 5, odds: 9.80,  stake: 1.00, ret: 9.80, status: "win" },
+  { date: "05 MAR", legs: 5, odds: 22.10, stake: 1.00, ret: 0, status: "loss" },
+  { date: "04 MAR", legs: 5, odds: 14.50, stake: 1.00, ret: 14.50, status: "win" },
+  { date: "03 MAR", legs: 5, odds: 8.20,  stake: 1.00, ret: 0, status: "loss" },
+  { date: "02 MAR", legs: 5, odds: 31.40, stake: 1.00, ret: 31.40, status: "win" },
+];
+
+function renderHistory() {
+  const tbody = document.getElementById('history-body');
+  tbody.innerHTML = history.map(h => `
+    <tr>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;">${h.date}</td>
+      <td>${h.legs}-fold</td>
+      <td style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent);">${h.odds}</td>
+      <td>€${h.stake.toFixed(2)}</td>
+      <td style="color:${h.ret > 0 ? 'var(--accent)' : 'var(--muted)'}">
+        ${h.ret > 0 ? '+€' + h.ret.toFixed(2) : '—'}
+      </td>
+      <td><span class="badge ${h.status}">${h.status.toUpperCase()}</span></td>
+    </tr>
+  `).join('');
+}
+
+renderHistory();
+
+// ── P&L Chart ──
+function drawChart() {
+  const canvas = document.getElementById('plChart');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+
+  const pl = [-1, -2, 7.8, -3, 11.5, -4, 27.4, -5, 38.9, -6, 47.3];
+  const min = Math.min(...pl);
+  const max = Math.max(...pl);
+  const range = max - min;
+  const w = canvas.width;
+  const h = canvas.height;
+  const pad = 10;
+
+  const x = (i) => pad + (i / (pl.length - 1)) * (w - pad * 2);
+  const y = (v) => h - pad - ((v - min) / range) * (h - pad * 2);
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(200,241,53,0.3)');
+  grad.addColorStop(1, 'rgba(200,241,53,0)');
+
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(pl[0]));
+  pl.forEach((v, i) => { if (i > 0) ctx.lineTo(x(i), y(v)); });
+  ctx.lineTo(x(pl.length - 1), h);
+  ctx.lineTo(x(0), h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(pl[0]));
+  pl.forEach((v, i) => { if (i > 0) ctx.lineTo(x(i), y(v)); });
+  ctx.strokeStyle = '#c8f135';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots
+  pl.forEach((v, i) => {
+    ctx.beginPath();
+    ctx.arc(x(i), y(v), 3, 0, Math.PI * 2);
+    ctx.fillStyle = v >= 0 ? '#c8f135' : '#ff4d4d';
+    ctx.fill();
+  });
+}
+
+setTimeout(drawChart, 100);
+window.addEventListener('resize', drawChart);
+
+// ── Controls ──
+function showToast(msg, color = 'var(--accent)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = color;
+  t.style.color = color;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function triggerBot() {
+  const btn = document.querySelector('.control-btn.primary');
+  btn.classList.add('trigger-running');
+  btn.textContent = '⏳ BOT RUNNING...';
+  showToast('▶ Bot triggered — check Telegram for updates');
+  
+  // In production: call GitHub Actions API or your backend
+  setTimeout(() => {
+    btn.classList.remove('trigger-running');
+    btn.innerHTML = '<span class="btn-icon">▶</span> RUN BOT NOW';
+    showToast('✅ Bot run complete — slip sent to Telegram');
+  }, 4000);
+}
+
+function refreshSlip() {
+  showToast('↻ Refreshing slip data...');
+  setTimeout(() => {
+    renderSlip();
+    showToast('✅ Slip refreshed');
+  }, 1000);
+}
+
+function stopBot() {
+  showToast('■ Bot paused — no bets will be placed', 'var(--accent2)');
+}
+
+function saveSettings() {
+  const stake = document.getElementById('stake').value;
+  const legs = document.getElementById('maxLegs').value;
+  const odds = document.getElementById('minOdds').value;
+  const conf = document.getElementById('minConf').value;
+  
+  // In production: POST to your backend/config API
+  localStorage.setItem('botSettings', JSON.stringify({ stake, legs, odds, conf }));
+  showToast(`✅ Settings saved — Stake: €${stake} | Legs: ${legs}`);
+}
+
+// Load saved settings
+const saved = JSON.parse(localStorage.getItem('botSettings') || '{}');
+if (saved.stake) document.getElementById('stake').value = saved.stake;
+if (saved.legs) document.getElementById('maxLegs').value = saved.legs;
+if (saved.odds) document.getElementById('minOdds').value = saved.odds;
+if (saved.conf) document.getElementById('minConf').value = saved.conf;
+</script>
+</body>
+</html>
