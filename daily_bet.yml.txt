@@ -2,9 +2,9 @@ name: Betting Bot
 
 on:
   schedule:
-    - cron: '0 9 * * *'    # 09:00 UTC — run bot + place bets
-    - cron: '0 7 * * *'    # 07:00 UTC — daily preview (upcoming matches)
-    - cron: '0 20 * * 0'   # 20:00 UTC Sunday — weekly report
+    - cron: '0 8 * * *'    # 10:00 CEST (UTC+2) — daily preview (upcoming matches)
+    - cron: '0 9 * * *'    # 11:00 CEST (UTC+2) — run bot + place bets
+    - cron: '30 21 * * 0'  # 23:30 CEST (UTC+2) Sunday — weekly report
   workflow_dispatch:
     inputs:
       action:
@@ -54,7 +54,7 @@ jobs:
 
   run-preview:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'preview' || github.event.schedule == '0 7 * * *'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'preview' || github.event.schedule == '0 8 * * *'
 
     steps:
       - uses: actions/checkout@v4
@@ -79,7 +79,7 @@ jobs:
     if: |
       (github.event_name == 'workflow_dispatch' && 
        contains(fromJson('["report_daily","report_weekly","report_monthly"]'), github.event.inputs.action)) ||
-      github.event.schedule == '0 20 * * 0'
+      github.event.schedule == '30 21 * * 0'
 
     steps:
       - uses: actions/checkout@v4
