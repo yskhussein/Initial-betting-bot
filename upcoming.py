@@ -111,14 +111,12 @@ def pre_analyze(fixture):
                         reasoning.append(f"Away favored @ {v['odd']}")
                         bet = "away_win"
 
-    # Status check
+    # Status check — skip if not upcoming
     status = fixture["fixture"].get("status", {}).get("short", "")
     if status not in ("NS", "TBD", ""):
-        score = 0  # skip non-upcoming
+        return None  # skip finished/live matches
 
     confidence = min(score, 100)
-    if confidence < HIGH_CONFIDENCE_THRESHOLD:
-        bet = "double_chance"
 
     return {
         "fixture_id": fixture["fixture"]["id"],
@@ -146,15 +144,19 @@ def scan_and_alert(days=7, save=True):
     analyzed = []
     high_confidence = []
 
-    for fixture in fixtures[:50]:  # limit to avoid API rate limits
+    for fixture in fixtures[:200]:
         try:
             result = pre_analyze(fixture)
+            if result is None:
+                continue  # skip non-upcoming
             analyzed.append(result)
             if result["confidence"] >= HIGH_CONFIDENCE_THRESHOLD:
                 high_confidence.append(result)
-                log.info(f"🔥 High confidence: {result['home']} vs {result['away']} @ {result['confidence']}%")
+                log.info(f"🔥 {result['home']} vs {result['away']} @ {result['confidence']}%")
         except Exception as e:
             log.warning(f"Analysis failed: {e}")
+    
+    log.info(f"Analyzed {len(analyzed)} upcoming fixtures")
 
     # Sort by confidence
     analyzed.sort(key=lambda x: x["confidence"], reverse=True)
