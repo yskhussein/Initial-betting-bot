@@ -1,0 +1,54 @@
+name: 🤖 Daily Betting Bot
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Every day at 09:00 UTC
+  workflow_dispatch:       # Allow manual trigger from GitHub UI
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🌐 Install Chrome & Chromedriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+          pip install webdriver-manager
+
+      - name: 🤖 Run betting bot
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          UNIBET_USERNAME: ${{ secrets.UNIBET_USERNAME }}
+          UNIBET_PASSWORD: ${{ secrets.UNIBET_PASSWORD }}
+        run: python bot.py
+
+      - name: 📁 Upload last slip as artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: last-slip
+          path: last_slip.json
+          if-no-files-found: ignore
+
+      - name: 📸 Upload error screenshot if failed
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: error-screenshot
+          path: error_screenshot.png
+          if-no-files-found: ignore
