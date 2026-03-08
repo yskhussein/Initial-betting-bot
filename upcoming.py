@@ -59,20 +59,14 @@ def send_telegram(message):
 # ─────────────────────────────────────────
 
 def get_upcoming_fixtures(days=7):
-    fixtures = []
-    today = datetime.utcnow()
-
-    for day_offset in range(1, days + 1):
-        date = (today + timedelta(days=day_offset)).strftime("%Y-%m-%d")
-        try:
-            data = api_get("fixtures", {"date": date})
-            log.info(f"Found {len(data)} fixtures on {date}")
-            fixtures.extend(data)
-        except Exception as e:
-            log.warning(f"Failed to fetch fixtures for {date}: {e}")
-
-    log.info(f"Total fixtures found: {len(fixtures)}")
-    return fixtures
+    # Use 'next' param to get upcoming fixtures in one call — much more efficient
+    try:
+        data = api_get("fixtures", {"next": days * 20})  # get plenty
+        log.info(f"Total upcoming fixtures found: {len(data)}")
+        return data
+    except Exception as e:
+        log.warning(f"Failed to fetch upcoming fixtures: {e}")
+        return []
 
 
 # ─────────────────────────────────────────
