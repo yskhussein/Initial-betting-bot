@@ -113,6 +113,10 @@ class APIHandler(BaseHTTPRequestHandler):
         elif path == "/api/stats":
             self.send_json(get_stats())
 
+        elif path == "/api/upcoming":
+            upcoming = load_json("upcoming.json", [])
+            self.send_json(upcoming)
+
         elif path == "/api/settings":
             settings = load_json("settings.json", {
                 "stake": 1.00, "max_legs": 5,
