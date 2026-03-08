@@ -37,17 +37,17 @@ jobs:
           UNIBET_PASSWORD: ${{ secrets.UNIBET_PASSWORD }}
         run: python bot.py
 
-      - name: 📁 Upload last slip as artifact
+   - name: 📁 Upload last slip
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: last-slip
           path: last_slip.json
           if-no-files-found: ignore
 
-      - name: 📸 Upload error screenshot if failed
+      - name: 📸 Upload error screenshot
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: error-screenshot
           path: error_screenshot.png
