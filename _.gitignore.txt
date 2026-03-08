@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.pyo
+last_slip.json
+error_screenshot.png
+.env
