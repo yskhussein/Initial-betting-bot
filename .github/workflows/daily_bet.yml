@@ -3,7 +3,7 @@ name: 🤖 Daily Betting Bot
 on:
   schedule:
     - cron: '0 9 * * *'  # Every day at 09:00 UTC
-  workflow_dispatch:       # Allow manual trigger from GitHub UI
+  workflow_dispatch:       # Manual trigger from GitHub UI
 
 jobs:
   run-bot:
@@ -19,13 +19,12 @@ jobs:
           python-version: '3.11'
 
       - name: 📦 Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: 🌐 Install Chrome & Chromedriver
         run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+          pip install -r requirements.txt
           pip install webdriver-manager
+
+      - name: 🌐 Install Chrome
+        run: sudo apt-get install -y google-chrome-stable
 
       - name: 🤖 Run betting bot
         env:
@@ -37,7 +36,7 @@ jobs:
           UNIBET_PASSWORD: ${{ secrets.UNIBET_PASSWORD }}
         run: python bot.py
 
-   - name: 📁 Upload last slip
+      - name: 📁 Upload last slip
         if: always()
         uses: actions/upload-artifact@v4
         with:
