@@ -200,10 +200,9 @@ def handle_upcoming(chat_id):
             send_message(chat_id, "📅 No upcoming data. Use /preview to scan.")
             return
 
-        high_conf = [m for m in data if m["confidence"] >= 65][:5]
+        high_conf = [m for m in data if m["confidence"] >= 35]
         if not high_conf:
-            send_message(chat_id, "📅 No high confidence picks found yet.")
-            return
+            high_conf = sorted(data, key=lambda x: x["confidence"], reverse=True)[:5]
 
         lines = [f"🔥 *High Confidence Upcoming Picks*\n"]
         for m in high_conf:
