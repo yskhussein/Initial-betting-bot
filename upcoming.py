@@ -69,7 +69,7 @@ def get_upcoming_fixtures(days=7):
                 data = api_get("fixtures", {
                     "league": league["id"],
                     "date": date,
-                    "season": today.year
+                    "season": 2025
                 })
                 for f in data:
                     f["_league_name"] = league["name"]
