@@ -64,18 +64,12 @@ def get_upcoming_fixtures(days=7):
 
     for day_offset in range(1, days + 1):
         date = (today + timedelta(days=day_offset)).strftime("%Y-%m-%d")
-        for league in LEAGUES:
-            try:
-                data = api_get("fixtures", {
-                    "league": league["id"],
-                    "date": date,
-                    "season": 2025
-                })
-                for f in data:
-                    f["_league_name"] = league["name"]
-                fixtures.extend(data)
-            except Exception as e:
-                log.warning(f"Failed to fetch {league['name']} for {date}: {e}")
+        try:
+            data = api_get("fixtures", {"date": date, "season": 2025})
+            log.info(f"Found {len(data)} fixtures on {date}")
+            fixtures.extend(data)
+        except Exception as e:
+            log.warning(f"Failed to fetch fixtures for {date}: {e}")
 
     return fixtures
 
