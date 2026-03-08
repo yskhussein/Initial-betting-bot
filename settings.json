@@ -1,0 +1,7 @@
+{
+  "stake": 1.00,
+  "max_legs": 5,
+  "min_odds": 1.40,
+  "min_confidence": 40,
+  "paused": false
+}
