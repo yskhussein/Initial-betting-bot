@@ -62,23 +62,6 @@ def get_upcoming_fixtures(days=7):
     fixtures = []
     today = datetime.utcnow()
 
-    # Test raw API first
-    test_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
-    try:
-        import requests as req
-        r = req.get(
-            "https://v3.football.api-sports.io/fixtures",
-            headers={"x-apisports-key": API_FOOTBALL_KEY.strip()},
-            params={"date": test_date},
-            timeout=10
-        )
-        log.info(f"RAW API status: {r.status_code}")
-        log.info(f"RAW API response keys: {list(r.json().keys())}")
-        log.info(f"RAW API results count: {r.json().get('results', 0)}")
-        log.info(f"RAW API errors: {r.json().get('errors', {})}")
-    except Exception as e:
-        log.error(f"Raw API test failed: {e}")
-
     for day_offset in range(1, days + 1):
         date = (today + timedelta(days=day_offset)).strftime("%Y-%m-%d")
         try:
@@ -97,96 +80,64 @@ def get_upcoming_fixtures(days=7):
 # ─────────────────────────────────────────
 
 def pre_analyze(fixture):
+    """Lightweight analysis using only fixture data — no extra API calls."""
     home_id = fixture["teams"]["home"]["id"]
     away_id = fixture["teams"]["away"]["id"]
-    league_id = fixture["league"]["id"]
-    season = fixture["league"]["season"]
     home_name = fixture["teams"]["home"]["name"]
     away_name = fixture["teams"]["away"]["name"]
     kick_off = fixture["fixture"]["date"]
-
-    # Fetch data
-    h2h = api_get("fixtures/headtohead", {"h2h": f"{home_id}-{away_id}", "last": 10})
-    home_form = api_get("fixtures", {"team": home_id, "last": 6, "status": "FT"})
-    away_form = api_get("fixtures", {"team": away_id, "last": 6, "status": "FT"})
-    predictions = api_get("predictions", {"fixture": fixture["fixture"]["id"]})
-    home_injuries = api_get("injuries", {"team": home_id, "fixture": fixture["fixture"]["id"]})
-    away_injuries = api_get("injuries", {"team": away_id, "fixture": fixture["fixture"]["id"]})
+    league_name = fixture.get("_league_name", fixture["league"]["name"])
 
     score = 0
     reasoning = []
     bet = "home_win"
 
-    # H2H
-    if h2h:
-        home_wins = sum(1 for f in h2h if f["teams"]["home"]["id"] == home_id and f["teams"]["home"]["winner"])
-        away_wins = sum(1 for f in h2h if f["teams"]["away"]["id"] == away_id and f["teams"]["away"]["winner"])
-        avg_goals = sum((f["goals"]["home"] or 0) + (f["goals"]["away"] or 0)
-                       for f in h2h if f["goals"]["home"] is not None) / max(len(h2h), 1)
+    # Home/away advantage
+    score += 20
+    reasoning.append("Home advantage")
+    bet = "home_win"
 
-        if home_wins > away_wins:
-            score += 20; bet = "home_win"
-            reasoning.append(f"H2H: home won {home_wins}/{len(h2h)}")
-        elif away_wins > home_wins:
-            score += 15; bet = "away_win"
-            reasoning.append(f"H2H: away won {away_wins}/{len(h2h)}")
+    # Venue info
+    venue = fixture["fixture"].get("venue", {})
+    if venue and venue.get("name"):
+        reasoning.append(f"Venue: {venue['name']}")
 
-        if avg_goals > 2.5:
-            score += 10
-            reasoning.append(f"H2H avg {avg_goals:.1f} goals")
+    # Odds if available from fixture
+    odds_data = fixture.get("odds", [])
+    if odds_data:
+        for odd in odds_data:
+            if odd.get("name") == "Match Winner":
+                for v in odd.get("values", []):
+                    if v["value"] == "Home" and float(v["odd"]) < 2.0:
+                        score += 20
+                        reasoning.append(f"Home favored @ {v['odd']}")
+                        bet = "home_win"
+                    elif v["value"] == "Away" and float(v["odd"]) < 1.8:
+                        score += 15
+                        reasoning.append(f"Away favored @ {v['odd']}")
+                        bet = "away_win"
 
-    # Home form
-    if home_form:
-        wins = sum(1 for f in home_form
-                  if (f["teams"]["home"]["id"] == home_id and f["teams"]["home"]["winner"]) or
-                     (f["teams"]["away"]["id"] == home_id and f["teams"]["away"]["winner"]))
-        if wins >= 4:
-            score += 25
-            reasoning.append(f"Home in great form ({wins}/6 wins)")
-        elif wins >= 3:
-            score += 15
-            reasoning.append(f"Home in good form ({wins}/6 wins)")
-
-    # Away form
-    if away_form:
-        losses = sum(1 for f in away_form
-                    if (f["teams"]["home"]["id"] == away_id and f["teams"]["away"]["winner"]) or
-                       (f["teams"]["away"]["id"] == away_id and f["teams"]["home"]["winner"]))
-        if losses >= 4:
-            score += 15
-            reasoning.append(f"Away poor form ({losses}/6 losses)")
-
-    # Injuries
-    if len(away_injuries) > len(home_injuries) + 2:
-        score += 10
-        reasoning.append(f"Away missing {len(away_injuries)} players")
-
-    # API prediction
-    if predictions:
-        winner = predictions[0].get("predictions", {}).get("winner", {})
-        if winner.get("id") == home_id:
-            score += 15
-            reasoning.append(f"Model predicts: {winner.get('comment', 'Home win')}")
-        elif winner.get("id") == away_id:
-            score += 10; bet = "away_win"
-            reasoning.append("Model predicts: Away win")
+    # Status check
+    status = fixture["fixture"].get("status", {}).get("short", "")
+    if status not in ("NS", "TBD", ""):
+        score = 0  # skip non-upcoming
 
     confidence = min(score, 100)
-
-    # Adjust bet based on confidence
-    if confidence < 30:
+    if confidence < HIGH_CONFIDENCE_THRESHOLD:
         bet = "double_chance"
 
     return {
         "fixture_id": fixture["fixture"]["id"],
         "home": home_name,
         "away": away_name,
-        "league": fixture.get("_league_name", fixture["league"]["name"]),
+        "league": league_name,
         "kick_off": kick_off,
         "confidence": confidence,
         "recommended_bet": bet,
-        "reasoning": reasoning[:3]
+        "reasoning": reasoning[:3],
+        "stats": {}
     }
+
 
 
 # ─────────────────────────────────────────
