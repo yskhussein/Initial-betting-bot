@@ -62,15 +62,33 @@ def get_upcoming_fixtures(days=7):
     fixtures = []
     today = datetime.utcnow()
 
+    # Test raw API first
+    test_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
+    try:
+        import requests as req
+        r = req.get(
+            "https://v3.football.api-sports.io/fixtures",
+            headers={"x-apisports-key": API_FOOTBALL_KEY.strip()},
+            params={"date": test_date},
+            timeout=10
+        )
+        log.info(f"RAW API status: {r.status_code}")
+        log.info(f"RAW API response keys: {list(r.json().keys())}")
+        log.info(f"RAW API results count: {r.json().get('results', 0)}")
+        log.info(f"RAW API errors: {r.json().get('errors', {})}")
+    except Exception as e:
+        log.error(f"Raw API test failed: {e}")
+
     for day_offset in range(1, days + 1):
         date = (today + timedelta(days=day_offset)).strftime("%Y-%m-%d")
         try:
-            data = api_get("fixtures", {"date": date, "season": 2025})
+            data = api_get("fixtures", {"date": date})
             log.info(f"Found {len(data)} fixtures on {date}")
             fixtures.extend(data)
         except Exception as e:
             log.warning(f"Failed to fetch fixtures for {date}: {e}")
 
+    log.info(f"Total fixtures found: {len(fixtures)}")
     return fixtures
 
 
