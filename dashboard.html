@@ -19,96 +19,177 @@
       linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px);
     background-size: 40px 40px; pointer-events: none; z-index: 0;
   }
-  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
 
+  /* ── Header ── */
   header { border-bottom: 1px solid var(--border); padding: 20px 0; display: flex; align-items: center; justify-content: space-between; }
   .logo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 4px; color: var(--accent); }
   .logo span { color: var(--text); }
   .status-pill { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); padding: 8px 16px; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1px; }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
 
-  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border); border-top: none; margin-bottom: 32px; }
-  .stat { padding: 24px; border-right: 1px solid var(--border); position: relative; overflow: hidden; }
+  /* ── API bar ── */
+  .api-url-bar { background: var(--surface2); border: 1px solid var(--border); border-top: none; padding: 10px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 0; }
+  .api-url-input { flex: 1; background: transparent; border: none; color: var(--text); font-family: 'Space Mono', monospace; font-size: 12px; outline: none; }
+  .api-url-btn { background: var(--accent); color: #000; border: none; padding: 6px 14px; font-family: 'Space Mono', monospace; font-size: 10px; cursor: pointer; font-weight: 700; letter-spacing: 1px; }
+
+  /* ── Stats bar ── */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border); border-top: none; margin-bottom: 0; }
+  .stat { padding: 20px 24px; border-right: 1px solid var(--border); position: relative; overflow: hidden; }
   .stat:last-child { border-right: none; }
   .stat::before { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent); width: 0; transition: width 1s ease; }
   .stat.loaded::before { width: 100%; }
-  .stat-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
-  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 2px; line-height: 1; }
+  .stat-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 2px; line-height: 1; }
   .stat-value.green { color: var(--accent); }
   .stat-value.red { color: var(--accent2); }
   .stat-value.blue { color: var(--accent3); }
-  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-  .main-grid { display: grid; grid-template-columns: 1fr 380px; gap: 24px; margin-bottom: 32px; }
-  .panel { background: var(--surface); border: 1px solid var(--border); }
-  .panel-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  /* ── Tabs ── */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 24px; margin-top: 24px; }
+  .tab { padding: 12px 24px; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Panel ── */
+  .panel { background: var(--surface); border: 1px solid var(--border); margin-bottom: 24px; }
+  .panel-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
   .panel-title { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
   .panel-body { padding: 24px; }
 
-  .slip-leg { display: flex; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.4s ease forwards; opacity: 0; }
+  /* ── Main grid ── */
+  .main-grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+
+  /* ── Slip legs ── */
+  .slip-leg { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); animation: slideIn 0.4s ease forwards; opacity: 0; }
   .slip-leg:last-child { border-bottom: none; }
   @keyframes slideIn { from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)} }
-  .leg-num { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--border); width: 32px; flex-shrink: 0; }
+  .leg-num { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--border); width: 30px; flex-shrink: 0; }
   .leg-info { flex: 1; }
   .leg-match { font-weight: 500; font-size: 14px; margin-bottom: 2px; }
-  .leg-league { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .leg-league { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
   .leg-bet { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--accent3); }
-  .leg-odds { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--accent); }
-  .leg-conf { text-align: right; width: 60px; }
-  .conf-bar { height: 3px; background: var(--border); margin-top: 4px; position: relative; overflow: hidden; }
-  .conf-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); transition: width 1s ease; }
+  .leg-odds { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--accent); }
+  .leg-conf { text-align: right; width: 56px; }
+  .conf-bar { height: 3px; background: var(--border); margin-top: 4px; overflow: hidden; }
+  .conf-fill { height: 100%; background: var(--accent); transition: width 1s ease; }
   .conf-label { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); }
-
-  .slip-footer { margin-top: 20px; padding: 16px; background: var(--surface2); border: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center; }
+  .slip-footer { margin-top: 16px; padding: 14px; background: var(--surface2); border: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center; }
   .slip-footer-item label { display: block; font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
-  .slip-footer-item span { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--accent); }
+  .slip-footer-item span { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--accent); }
 
-  .control-btn { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
+  /* ── Controls ── */
+  .control-btn { width: 100%; padding: 13px; margin-bottom: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
   .control-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.05); }
   .control-btn.primary { border-color: var(--accent); background: var(--accent); color: #000; font-weight: 700; }
-  .control-btn.primary:hover { background: #b8e120; color: #000; }
+  .control-btn.primary:hover { background: #b8e120; }
   .control-btn.danger { border-color: var(--accent2); color: var(--accent2); }
   .control-btn.danger:hover { background: rgba(255,77,77,0.1); }
-  .btn-icon { font-size: 16px; }
 
-  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  /* ── Settings ── */
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .setting-row:last-child { border-bottom: none; }
-  .setting-label { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--muted); }
-  .setting-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; font-family: 'Space Mono', monospace; font-size: 13px; width: 100px; text-align: right; transition: border-color 0.2s; }
+  .setting-label { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); }
+  .setting-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; font-family: 'Space Mono', monospace; font-size: 13px; width: 90px; text-align: right; }
   .setting-input:focus { outline: none; border-color: var(--accent); }
-  .save-btn { width: 100%; padding: 12px; margin-top: 16px; background: transparent; border: 1px solid var(--accent); color: var(--accent); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+  .save-btn { width: 100%; padding: 11px; margin-top: 14px; background: transparent; border: 1px solid var(--accent); color: var(--accent); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
   .save-btn:hover { background: rgba(200,241,53,0.1); }
 
+  /* ── History table ── */
   .history-table { width: 100%; border-collapse: collapse; }
-  .history-table th { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
-  .history-table td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .history-table th { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  .history-table td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
   .history-table tr:last-child td { border-bottom: none; }
   .history-table tr:hover td { background: var(--surface2); }
-  .badge { padding: 3px 8px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; }
+  .badge { padding: 3px 8px; font-family: 'Space Mono', monospace; font-size: 10px; }
   .badge.win { background: rgba(200,241,53,0.15); color: var(--accent); }
   .badge.loss { background: rgba(255,77,77,0.15); color: var(--accent2); }
   .badge.pending { background: rgba(77,170,255,0.15); color: var(--accent3); }
 
-  .chart-container { height: 120px; position: relative; margin-top: 8px; }
+  /* ── Chart ── */
+  .chart-container { height: 110px; position: relative; margin-top: 8px; }
   canvas { width: 100% !important; height: 100% !important; }
 
-  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--accent); padding: 16px 24px; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--accent); z-index: 1000; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+  /* ── UPCOMING MATCHES ── */
+  .upcoming-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .date-filter { display: flex; gap: 8px; flex-wrap: wrap; }
+  .date-btn { padding: 6px 14px; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .date-btn:hover { border-color: var(--accent); color: var(--text); }
+  .date-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.08); }
+  .match-count { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); margin-left: auto; }
+
+  .matches-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; margin-top: 16px; }
+  .match-card { background: var(--surface2); border: 1px solid var(--border); padding: 16px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .match-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--border); transition: background 0.2s; }
+  .match-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .match-card:hover::before { background: var(--accent); }
+  .match-card.high::before { background: var(--accent); }
+  .match-card.mid::before { background: var(--accent3); }
+  .match-card.low::before { background: var(--muted); }
+
+  .match-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .match-teams { font-weight: 600; font-size: 14px; line-height: 1.3; flex: 1; }
+  .match-conf { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; margin-left: 12px; }
+  .match-conf.high { color: var(--accent); }
+  .match-conf.mid { color: var(--accent3); }
+  .match-conf.low { color: var(--muted); }
+
+  .match-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .match-league { font-size: 11px; color: var(--muted); }
+  .match-date { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); margin-left: auto; }
+  .match-bet { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--accent3); margin-top: 8px; }
+
+  /* ── Analysis Modal ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: none; align-items: center; justify-content: center; padding: 24px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; animation: modalIn 0.25s ease; }
+  @keyframes modalIn { from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)} }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; }
+  .modal-close { background: none; border: 1px solid var(--border); color: var(--muted); width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { border-color: var(--accent2); color: var(--accent2); }
+  .modal-body { padding: 24px; }
+
+  .analysis-section { margin-bottom: 20px; }
+  .analysis-label { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  .analysis-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .analysis-stat { background: var(--surface2); border: 1px solid var(--border); padding: 12px; text-align: center; }
+  .analysis-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: var(--accent); }
+  .analysis-stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .form-dots { display: flex; gap: 4px; margin-top: 6px; }
+  .form-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+  .form-dot.W { background: rgba(200,241,53,0.2); color: var(--accent); }
+  .form-dot.D { background: rgba(77,170,255,0.2); color: var(--accent3); }
+  .form-dot.L { background: rgba(255,77,77,0.2); color: var(--accent2); }
+
+  .reasoning-list { list-style: none; }
+  .reasoning-list li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); display: flex; gap: 10px; }
+  .reasoning-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
+  .reasoning-list li:last-child { border-bottom: none; }
+
+  .conf-big { font-family: 'Bebas Neue', sans-serif; font-size: 64px; line-height: 1; }
+  .conf-big.high { color: var(--accent); }
+  .conf-big.mid { color: var(--accent3); }
+  .conf-big.low { color: var(--muted); }
+
+  /* ── Toast ── */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--accent); padding: 14px 20px; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--accent); z-index: 200; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
   .toast.show { transform: translateY(0); opacity: 1; }
 
-  .api-url-bar { background: var(--surface2); border: 1px solid var(--border); padding: 10px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-  .api-url-input { flex: 1; background: transparent; border: none; color: var(--text); font-family: 'Space Mono', monospace; font-size: 12px; outline: none; }
-  .api-url-btn { background: var(--accent); color: #000; border: none; padding: 6px 12px; font-family: 'Space Mono', monospace; font-size: 10px; cursor: pointer; font-weight: 700; }
-
-  .loading { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 12px; padding: 20px 0; text-align: center; }
+  .loading { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 12px; padding: 24px; text-align: center; }
 
   @media (max-width: 900px) {
     .main-grid { grid-template-columns: 1fr; }
     .stats-bar { grid-template-columns: repeat(2, 1fr); }
     .stat:nth-child(2) { border-right: none; }
-    .stat:nth-child(3),
-    .stat:nth-child(4) { border-top: 1px solid var(--border); }
+    .stat:nth-child(3), .stat:nth-child(4) { border-top: 1px solid var(--border); }
     .stat:nth-child(4) { border-right: none; }
+    .matches-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -118,18 +199,17 @@
   <!-- Header -->
   <header>
     <div class="logo">BET<span>BOT</span></div>
-    <div style="display:flex;gap:12px;align-items:center;">
+    <div style="display:flex;gap:10px;align-items:center;">
       <div class="status-pill" id="api-status">
-        <div class="status-dot" style="background:var(--muted)"></div>
-        <span>CONNECTING...</span>
+        <div class="status-dot"></div><span>CONNECTING...</span>
       </div>
-      <div class="status-pill" style="color:#666;"><span id="clock">--:--:--</span></div>
+      <div class="status-pill"><span id="clock">--:--:--</span></div>
     </div>
   </header>
 
-  <!-- API URL config bar -->
+  <!-- API URL bar -->
   <div class="api-url-bar">
-    <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">RAILWAY URL</span>
+    <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;white-space:nowrap;">RAILWAY URL</span>
     <input class="api-url-input" id="apiUrl" placeholder="https://your-app.railway.app" />
     <button class="api-url-btn" onclick="connectAPI()">CONNECT</button>
   </div>
@@ -139,110 +219,136 @@
     <div class="stat" id="s1">
       <div class="stat-label">Total Bets</div>
       <div class="stat-value" id="stat-total">—</div>
-      <div class="stat-sub" id="stat-total-sub">Loading...</div>
+      <div class="stat-sub" id="stat-total-sub">—</div>
     </div>
     <div class="stat" id="s2">
       <div class="stat-label">Win Rate</div>
       <div class="stat-value green" id="stat-winrate">—</div>
-      <div class="stat-sub" id="stat-winrate-sub">Loading...</div>
+      <div class="stat-sub" id="stat-winrate-sub">—</div>
     </div>
     <div class="stat" id="s3">
       <div class="stat-label">Net P&L</div>
       <div class="stat-value" id="stat-pl">—</div>
-      <div class="stat-sub" id="stat-pl-sub">Loading...</div>
+      <div class="stat-sub" id="stat-pl-sub">—</div>
     </div>
     <div class="stat" id="s4">
-      <div class="stat-label">Today's Slip</div>
-      <div class="stat-value blue" id="stat-slip">—</div>
-      <div class="stat-sub" id="stat-slip-sub">Loading...</div>
+      <div class="stat-label">Upcoming</div>
+      <div class="stat-value blue" id="stat-upcoming">—</div>
+      <div class="stat-sub" id="stat-upcoming-sub">—</div>
     </div>
   </div>
 
-  <!-- Main grid -->
-  <div class="main-grid">
-    <div>
-      <!-- Today's slip -->
-      <div class="panel" style="margin-bottom:24px;">
-        <div class="panel-header">
-          <span class="panel-title">Today's Slip</span>
-          <span style="font-family:'Space Mono',monospace;font-size:10px;color:#666;" id="slip-date">—</span>
-        </div>
-        <div class="panel-body" id="slip-container">
-          <div class="loading">↻ Loading slip data...</div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('slip')">📋 Today's Slip</div>
+    <div class="tab" onclick="switchTab('upcoming')">📅 Upcoming</div>
+    <div class="tab" onclick="switchTab('history')">📜 History</div>
+    <div class="tab" onclick="switchTab('controls')">⚙️ Controls</div>
+  </div>
+
+  <!-- TAB: Today's Slip -->
+  <div id="tab-slip" class="tab-content active">
+    <div class="main-grid">
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Today's Slip</span>
+            <span style="font-family:'Space Mono',monospace;font-size:10px;color:#666;" id="slip-date">—</span>
+          </div>
+          <div class="panel-body" id="slip-container">
+            <div class="loading">↻ Loading slip...</div>
+          </div>
         </div>
       </div>
-
-      <!-- History -->
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Bet History</span>
-          <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);cursor:pointer;" onclick="loadHistory()">↻ REFRESH</span>
+      <div>
+        <div class="panel" style="margin-bottom:24px;">
+          <div class="panel-header"><span class="panel-title">P&L Chart</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);" id="chart-pl">—</span></div>
+          <div class="panel-body"><div class="chart-container"><canvas id="plChart"></canvas></div></div>
         </div>
-        <div class="panel-body" style="padding:0;">
-          <table class="history-table">
-            <thead>
-              <tr><th>Date</th><th>Legs</th><th>Odds</th><th>Stake</th><th>Return</th><th>Status</th></tr>
-            </thead>
-            <tbody id="history-body">
-              <tr><td colspan="6" class="loading">Loading history...</td></tr>
-            </tbody>
-          </table>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Quick Actions</span></div>
+          <div class="panel-body">
+            <button class="control-btn primary" onclick="triggerBot()"><span>▶</span> RUN BOT NOW</button>
+            <button class="control-btn" onclick="loadAll()"><span>↻</span> REFRESH</button>
+          </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div>
-      <!-- Controls -->
-      <div class="panel" style="margin-bottom:24px;">
-        <div class="panel-header"><span class="panel-title">Controls</span></div>
-        <div class="panel-body">
-          <button class="control-btn primary" onclick="triggerBot()">
-            <span class="btn-icon">▶</span> RUN BOT NOW
-          </button>
-          <button class="control-btn" onclick="loadAll()">
-            <span class="btn-icon">↻</span> REFRESH DATA
-          </button>
-          <button class="control-btn danger" onclick="togglePause()">
-            <span class="btn-icon">■</span> <span id="pause-label">PAUSE BOT</span>
-          </button>
+  <!-- TAB: Upcoming Matches -->
+  <div id="tab-upcoming" class="tab-content">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Upcoming Matches</span>
+        <div class="upcoming-toolbar">
+          <div class="date-filter" id="date-filters"></div>
+          <span class="match-count" id="match-count">— matches</span>
+          <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);cursor:pointer;" onclick="loadUpcoming()">↻ REFRESH</span>
         </div>
       </div>
-
-      <!-- Settings -->
-      <div class="panel" style="margin-bottom:24px;">
-        <div class="panel-header"><span class="panel-title">Settings</span></div>
-        <div class="panel-body">
-          <div class="setting-row">
-            <span class="setting-label">STAKE (€)</span>
-            <input type="number" class="setting-input" id="stake" value="1.00" step="0.50" min="0.50">
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">MAX LEGS</span>
-            <input type="number" class="setting-input" id="maxLegs" value="5" min="2" max="12">
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">MIN ODDS</span>
-            <input type="number" class="setting-input" id="minOdds" value="1.40" step="0.10">
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">MIN CONFIDENCE</span>
-            <input type="number" class="setting-input" id="minConf" value="40" min="10" max="90">
-          </div>
-          <button class="save-btn" onclick="saveSettings()">SAVE SETTINGS</button>
-        </div>
-      </div>
-
-      <!-- P&L Chart -->
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">P&L Chart</span>
-          <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);" id="chart-pl">—</span>
-        </div>
-        <div class="panel-body">
-          <div class="chart-container"><canvas id="plChart"></canvas></div>
+      <div class="panel-body">
+        <div id="upcoming-container">
+          <div class="loading">↻ Loading upcoming matches...</div>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- TAB: History -->
+  <div id="tab-history" class="tab-content">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Bet History</span>
+        <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);cursor:pointer;" onclick="loadHistory()">↻ REFRESH</span>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        <table class="history-table">
+          <thead><tr><th>Date</th><th>Legs</th><th>Odds</th><th>Stake</th><th>Return</th><th>Status</th></tr></thead>
+          <tbody id="history-body"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Controls -->
+  <div id="tab-controls" class="tab-content">
+    <div class="main-grid">
+      <div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Settings</span></div>
+          <div class="panel-body">
+            <div class="setting-row"><span class="setting-label">STAKE (€)</span><input type="number" class="setting-input" id="stake" value="1.00" step="0.50" min="0.50"></div>
+            <div class="setting-row"><span class="setting-label">MAX LEGS</span><input type="number" class="setting-input" id="maxLegs" value="5" min="2" max="12"></div>
+            <div class="setting-row"><span class="setting-label">MIN ODDS</span><input type="number" class="setting-input" id="minOdds" value="1.40" step="0.10"></div>
+            <div class="setting-row"><span class="setting-label">MIN CONFIDENCE</span><input type="number" class="setting-input" id="minConf" value="40" min="10" max="90"></div>
+            <button class="save-btn" onclick="saveSettings()">SAVE SETTINGS</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Controls</span></div>
+          <div class="panel-body">
+            <button class="control-btn primary" onclick="triggerBot()"><span>▶</span> RUN BOT NOW</button>
+            <button class="control-btn" onclick="loadAll()"><span>↻</span> REFRESH ALL DATA</button>
+            <button class="control-btn danger" onclick="togglePause()"><span>■</span> <span id="pause-label">PAUSE BOT</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Analysis Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-content">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Match Analysis</div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
@@ -251,144 +357,297 @@
 <script>
 // ── Config ──
 let API_BASE = localStorage.getItem("apiUrl") || "";
+let allUpcoming = [];
+let activeDate = "all";
 const apiUrlInput = document.getElementById("apiUrl");
 if (API_BASE) apiUrlInput.value = API_BASE;
 
 function connectAPI() {
   API_BASE = apiUrlInput.value.trim().replace(/\/$/, "");
   localStorage.setItem("apiUrl", API_BASE);
-  showToast("🔌 Connecting to " + API_BASE);
+  showToast("🔌 Connecting...");
   loadAll();
 }
 
 // ── Clock ──
-function updateClock() {
-  document.getElementById("clock").textContent = new Date().toUTCString().slice(17, 25) + " UTC";
-}
-setInterval(updateClock, 1000); updateClock();
+setInterval(() => {
+  document.getElementById("clock").textContent = new Date().toUTCString().slice(17,25) + " UTC";
+}, 1000);
 
-// ── API calls ──
+// ── Tabs ──
+function switchTab(name) {
+  document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("tab-" + name).classList.add("active");
+  document.querySelectorAll(".tab")[["slip","upcoming","history","controls"].indexOf(name)].classList.add("active");
+  if (name === "upcoming" && allUpcoming.length === 0) loadUpcoming();
+  if (name === "history") loadHistory();
+}
+
+// ── API ──
 async function apiFetch(path, opts = {}) {
   if (!API_BASE) return null;
   try {
     const r = await fetch(API_BASE + path, opts);
     return await r.json();
-  } catch(e) {
-    log("API error: " + e);
-    return null;
-  }
+  } catch(e) { return null; }
 }
 
-function setAPIStatus(connected) {
+function setAPIStatus(ok) {
   const el = document.getElementById("api-status");
-  const dot = el.querySelector(".status-dot");
-  const span = el.querySelector("span");
-  if (connected) {
-    dot.style.background = "var(--accent)";
-    span.textContent = "LIVE";
-  } else {
-    dot.style.background = "var(--accent2)";
-    span.textContent = "OFFLINE";
-  }
+  el.querySelector(".status-dot").style.background = ok ? "var(--accent)" : "var(--accent2)";
+  el.querySelector("span").textContent = ok ? "LIVE" : "OFFLINE";
 }
 
-// ── Load everything ──
 async function loadAll() {
-  await Promise.all([loadSlip(), loadStats(), loadHistory(), loadSettings()]);
+  await Promise.all([loadSlip(), loadStats(), loadSettings()]);
 }
 
 // ── Slip ──
 async function loadSlip() {
   const slip = await apiFetch("/api/slip");
-  if (!slip || slip.error) {
-    document.getElementById("slip-container").innerHTML = '<div class="loading">No slip found. Run the bot first.</div>';
-    setAPIStatus(false);
-    return;
-  }
+  if (!slip || slip.error) { setAPIStatus(false); return; }
   setAPIStatus(true);
-  renderSlip(slip);
-}
-
-function renderSlip(slip) {
   document.getElementById("slip-date").textContent = slip.built_at ? slip.built_at.slice(0,10) : "—";
-  const container = document.getElementById("slip-container");
-  let combinedOdds = slip.combined_odds || 0;
+  const c = document.getElementById("slip-container");
   let html = "";
-
   (slip.selections || []).forEach((leg, i) => {
-    html += `
-      <div class="slip-leg" style="animation-delay:${i*0.1}s">
-        <div class="leg-num">${String(i+1).padStart(2,"0")}</div>
-        <div class="leg-info">
-          <div class="leg-match">${leg.home} vs ${leg.away}</div>
-          <div class="leg-league">${leg.league || ""}</div>
-          <div class="leg-bet">${(leg.recommended_bet||"").replace(/_/g," ").toUpperCase()}</div>
-        </div>
-        <div class="leg-odds">${(leg.odds||0).toFixed(2)}</div>
-        <div class="leg-conf">
-          <div class="conf-label">${leg.confidence||0}%</div>
-          <div class="conf-bar"><div class="conf-fill" style="width:${leg.confidence||0}%"></div></div>
-        </div>
-      </div>`;
-  });
-
-  html += `
-    <div class="slip-footer">
-      <div class="slip-footer-item"><label>Combined Odds</label><span>${combinedOdds}</span></div>
-      <div class="slip-footer-item"><label>Stake</label><span>€${(slip.stake||0).toFixed(2)}</span></div>
-      <div class="slip-footer-item"><label>Potential</label><span>€${(slip.potential_payout||0).toFixed(2)}</span></div>
+    html += `<div class="slip-leg" style="animation-delay:${i*0.08}s">
+      <div class="leg-num">${String(i+1).padStart(2,"0")}</div>
+      <div class="leg-info">
+        <div class="leg-match">${leg.home} vs ${leg.away}</div>
+        <div class="leg-league">${leg.league||""}</div>
+        <div class="leg-bet">${(leg.recommended_bet||"").replace(/_/g," ").toUpperCase()}</div>
+      </div>
+      <div class="leg-odds">${(leg.odds||0).toFixed(2)}</div>
+      <div class="leg-conf">
+        <div class="conf-label">${leg.confidence||0}%</div>
+        <div class="conf-bar"><div class="conf-fill" style="width:${leg.confidence||0}%"></div></div>
+      </div>
     </div>`;
-
-  container.innerHTML = html;
-
-  const legs = (slip.selections||[]).length;
-  document.getElementById("stat-slip").textContent = `${legs}-FOLD`;
-  document.getElementById("stat-slip-sub").textContent = `Odds: ${combinedOdds}`;
+  });
+  html += `<div class="slip-footer">
+    <div class="slip-footer-item"><label>Combined Odds</label><span>${slip.combined_odds}</span></div>
+    <div class="slip-footer-item"><label>Stake</label><span>€${(slip.stake||0).toFixed(2)}</span></div>
+    <div class="slip-footer-item"><label>Potential</label><span>€${(slip.potential_payout||0).toFixed(2)}</span></div>
+  </div>`;
+  c.innerHTML = html;
 }
 
 // ── Stats ──
 async function loadStats() {
   const s = await apiFetch("/api/stats");
   if (!s) return;
-
   document.getElementById("stat-total").textContent = s.total;
-  document.getElementById("stat-total-sub").textContent = `${s.wins} wins / ${s.losses} losses`;
+  document.getElementById("stat-total-sub").textContent = `${s.wins}W / ${s.losses}L`;
   document.getElementById("stat-winrate").textContent = s.win_rate + "%";
-  document.getElementById("stat-winrate-sub").textContent = `${s.wins} wins / ${s.total} bets`;
-
-  const pl = s.net_pl;
+  document.getElementById("stat-winrate-sub").textContent = `${s.wins} wins`;
+  const pl = s.net_pl, sign = pl >= 0 ? "+" : "";
   const plEl = document.getElementById("stat-pl");
-  plEl.textContent = (pl >= 0 ? "+" : "") + "€" + Math.abs(pl).toFixed(2);
+  plEl.textContent = sign + "€" + Math.abs(pl).toFixed(2);
   plEl.className = "stat-value " + (pl >= 0 ? "green" : "red");
-  document.getElementById("stat-pl-sub").textContent = `ROI: ${s.roi}%`;
-  document.getElementById("chart-pl").textContent = (pl >= 0 ? "+" : "") + "€" + pl.toFixed(2);
-
+  document.getElementById("stat-pl-sub").textContent = `ROI: ${sign}${s.roi}%`;
+  document.getElementById("chart-pl").textContent = sign + "€" + pl.toFixed(2);
   setTimeout(() => document.querySelectorAll(".stat").forEach(s => s.classList.add("loaded")), 300);
-
   if (s.pl_chart && s.pl_chart.length > 0) drawChart(s.pl_chart);
 }
+
+// ── Upcoming ──
+async function loadUpcoming() {
+  document.getElementById("upcoming-container").innerHTML = '<div class="loading">↻ Loading upcoming matches...</div>';
+  const data = await apiFetch("/api/upcoming");
+  if (!data || data.error || !data.length) {
+    document.getElementById("upcoming-container").innerHTML = '<div class="loading">No upcoming data. Use /preview on Telegram first.</div>';
+    return;
+  }
+  allUpcoming = data;
+  document.getElementById("stat-upcoming").textContent = data.length;
+  document.getElementById("stat-upcoming-sub").textContent = "next 7 days";
+  buildDateFilters(data);
+  renderUpcoming("all");
+}
+
+function buildDateFilters(data) {
+  const dates = [...new Set(data.map(m => m.kick_off ? m.kick_off.slice(0,10) : null).filter(Boolean))].sort();
+  const bar = document.getElementById("date-filters");
+  let html = `<button class="date-btn active" onclick="filterDate('all', this)">ALL</button>`;
+  dates.forEach(d => {
+    try {
+      const label = new Date(d).toLocaleDateString("nl-NL", {weekday:"short", day:"numeric", month:"short"});
+      html += `<button class="date-btn" onclick="filterDate('${d}', this)">${label.toUpperCase()}</button>`;
+    } catch {
+      html += `<button class="date-btn" onclick="filterDate('${d}', this)">${d}</button>`;
+    }
+  });
+  bar.innerHTML = html;
+}
+
+function filterDate(date, btn) {
+  activeDate = date;
+  document.querySelectorAll(".date-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderUpcoming(date);
+}
+
+function renderUpcoming(date) {
+  const filtered = date === "all" ? allUpcoming : allUpcoming.filter(m => m.kick_off && m.kick_off.startsWith(date));
+  document.getElementById("match-count").textContent = filtered.length + " matches";
+
+  if (!filtered.length) {
+    document.getElementById("upcoming-container").innerHTML = '<div class="loading">No matches for this date.</div>';
+    return;
+  }
+
+  // Group by date
+  const byDate = {};
+  filtered.forEach(m => {
+    const d = m.kick_off ? m.kick_off.slice(0,10) : "Unknown";
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(m);
+  });
+
+  let html = "";
+  Object.keys(byDate).sort().forEach(d => {
+    let dateLabel = d;
+    try { dateLabel = new Date(d).toLocaleDateString("nl-NL", {weekday:"long", day:"numeric", month:"long"}); } catch {}
+    html += `<div style="margin-bottom:20px;">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+        ${dateLabel.toUpperCase()} <span style="color:var(--accent);">(${byDate[d].length})</span>
+      </div>
+      <div class="matches-grid">`;
+
+    byDate[d].forEach((m, idx) => {
+      const conf = m.confidence || 0;
+      const confClass = conf >= 60 ? "high" : conf >= 40 ? "mid" : "low";
+      const time = m.kick_off ? m.kick_off.slice(11,16) : "";
+      html += `<div class="match-card ${confClass}" onclick="showAnalysis(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+        <div class="match-card-header">
+          <div class="match-teams">${m.home}<br><span style="color:var(--muted);font-size:12px;">vs</span> ${m.away}</div>
+          <div class="match-conf ${confClass}">${conf}%</div>
+        </div>
+        <div class="match-meta">
+          <span class="match-league">${m.league||""}</span>
+          ${time ? `<span class="match-date">${time}</span>` : ""}
+        </div>
+        <div class="match-bet">${(m.recommended_bet||"").replace(/_/g," ").toUpperCase()}</div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  document.getElementById("upcoming-container").innerHTML = html;
+}
+
+// ── Analysis Modal ──
+function showAnalysis(m) {
+  document.getElementById("modal-title").textContent = `${m.home} vs ${m.away}`;
+  const conf = m.confidence || 0;
+  const confClass = conf >= 60 ? "high" : conf >= 40 ? "mid" : "low";
+  const stats = m.stats || {};
+  const date = m.kick_off ? m.kick_off.slice(0,16).replace("T", " ") : "TBD";
+
+  let statsHtml = "";
+  const statItems = [
+    ["H2H Home Wins", stats.h2h_home_wins],
+    ["H2H Away Wins", stats.h2h_away_wins],
+    ["H2H Avg Goals", stats.h2h_avg_goals],
+    ["Home Avg Scored", stats.home_avg_scored],
+    ["Home Avg Conceded", stats.home_avg_conceded],
+    ["Away Avg Scored", stats.away_avg_scored],
+    ["Away Avg Conceded", stats.away_avg_conceded],
+    ["Home Injuries", stats.home_injuries],
+    ["Away Injuries", stats.away_injuries],
+  ].filter(s => s[1] !== undefined && s[1] !== null);
+
+  if (statItems.length) {
+    statsHtml = `<div class="analysis-section">
+      <div class="analysis-label">Key Stats</div>
+      <div class="analysis-grid">
+        ${statItems.map(s => `<div class="analysis-stat">
+          <div class="analysis-stat-val">${s[1]}</div>
+          <div class="analysis-stat-label">${s[0]}</div>
+        </div>`).join("")}
+      </div>
+    </div>`;
+  }
+
+  let formHtml = "";
+  if (stats.home_form || stats.away_form) {
+    const renderForm = (form, label) => form ? `
+      <div style="margin-bottom:10px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">${label}</div>
+        <div class="form-dots">${form.split("").map(r => `<div class="form-dot ${r}">${r}</div>`).join("")}</div>
+      </div>` : "";
+    formHtml = `<div class="analysis-section">
+      <div class="analysis-label">Recent Form</div>
+      ${renderForm(stats.home_form, m.home)}
+      ${renderForm(stats.away_form, m.away)}
+    </div>`;
+  }
+
+  let reasonHtml = "";
+  if (m.reasoning && m.reasoning.length) {
+    reasonHtml = `<div class="analysis-section">
+      <div class="analysis-label">Analysis</div>
+      <ul class="reasoning-list">
+        ${m.reasoning.map(r => `<li>${r}</li>`).join("")}
+      </ul>
+    </div>`;
+  }
+
+  if (stats.home_position || stats.away_position) {
+    statsHtml += `<div class="analysis-section" style="margin-top:12px;">
+      <div class="analysis-label">League Position</div>
+      <div class="analysis-grid">
+        <div class="analysis-stat"><div class="analysis-stat-val">#${stats.home_position||"?"}</div><div class="analysis-stat-label">${m.home}</div></div>
+        <div class="analysis-stat"><div class="analysis-stat-val">#${stats.away_position||"?"}</div><div class="analysis-stat-label">${m.away}</div></div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById("modal-body").innerHTML = `
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+      <div>
+        <div class="conf-big ${confClass}">${conf}%</div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);">CONFIDENCE</div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent3);margin-bottom:4px;">${(m.recommended_bet||"").replace(/_/g," ").toUpperCase()}</div>
+        <div style="font-size:12px;color:var(--muted);">${m.league||""}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px;">📅 ${date}</div>
+      </div>
+    </div>
+    ${statsHtml}
+    ${formHtml}
+    ${reasonHtml}
+  `;
+
+  document.getElementById("modal").classList.add("open");
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById("modal")) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById("modal").classList.remove("open");
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModalDirect(); });
 
 // ── History ──
 async function loadHistory() {
   const history = await apiFetch("/api/history");
   if (!history) return;
   const tbody = document.getElementById("history-body");
-  if (!history.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="loading">No history yet</td></tr>';
-    return;
-  }
-  tbody.innerHTML = history.map(h => `
-    <tr>
-      <td style="font-family:'Space Mono',monospace;font-size:11px;">${h.date||"—"}</td>
-      <td>${h.legs||"—"}-fold</td>
-      <td style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent);">${h.odds||"—"}</td>
-      <td>€${(h.stake||0).toFixed(2)}</td>
-      <td style="color:${h.return > 0 ? 'var(--accent)' : 'var(--muted)'}">
-        ${h.return > 0 ? "+€" + h.return.toFixed(2) : "—"}
-      </td>
-      <td><span class="badge ${h.status}">${(h.status||"").toUpperCase()}</span></td>
-    </tr>
-  `).join("");
+  if (!history.length) { tbody.innerHTML = '<tr><td colspan="6" class="loading">No history yet</td></tr>'; return; }
+  tbody.innerHTML = history.map(h => `<tr>
+    <td style="font-family:'Space Mono',monospace;font-size:11px;">${h.date||"—"}</td>
+    <td>${h.legs||"—"}-fold</td>
+    <td style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent);">${h.odds||"—"}</td>
+    <td>€${(h.stake||0).toFixed(2)}</td>
+    <td style="color:${h.return > 0 ? 'var(--accent)':'var(--muted)'};">${h.return > 0 ? "+€"+h.return.toFixed(2) : "—"}</td>
+    <td><span class="badge ${h.status}">${(h.status||"").toUpperCase()}</span></td>
+  </tr>`).join("");
 }
 
 // ── Settings ──
@@ -399,49 +658,35 @@ async function loadSettings() {
   if (s.max_legs) document.getElementById("maxLegs").value = s.max_legs;
   if (s.min_odds) document.getElementById("minOdds").value = s.min_odds;
   if (s.min_confidence) document.getElementById("minConf").value = s.min_confidence;
-  if (s.paused) {
-    document.getElementById("pause-label").textContent = "RESUME BOT";
-  }
+  document.getElementById("pause-label").textContent = s.paused ? "RESUME BOT" : "PAUSE BOT";
 }
 
 async function saveSettings() {
-  const data = {
-    stake: parseFloat(document.getElementById("stake").value),
-    max_legs: parseInt(document.getElementById("maxLegs").value),
-    min_odds: parseFloat(document.getElementById("minOdds").value),
-    min_confidence: parseInt(document.getElementById("minConf").value)
-  };
-  const result = await apiFetch("/api/settings", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(data)
+  const r = await apiFetch("/api/settings", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      stake: parseFloat(document.getElementById("stake").value),
+      max_legs: parseInt(document.getElementById("maxLegs").value),
+      min_odds: parseFloat(document.getElementById("minOdds").value),
+      min_confidence: parseInt(document.getElementById("minConf").value)
+    })
   });
-  if (result?.ok) showToast("✅ Settings saved");
-  else showToast("❌ Failed to save settings", "var(--accent2)");
+  showToast(r?.ok ? "✅ Settings saved" : "❌ Failed", r?.ok ? "var(--accent)" : "var(--accent2)");
 }
 
 // ── Controls ──
 async function triggerBot() {
   const btn = document.querySelector(".control-btn.primary");
-  btn.textContent = "⏳ RUNNING...";
-  btn.disabled = true;
-  const result = await apiFetch("/api/run", { method: "POST" });
-  showToast(result?.message || "▶ Bot triggered — check Telegram");
-  setTimeout(() => {
-    btn.innerHTML = '<span class="btn-icon">▶</span> RUN BOT NOW';
-    btn.disabled = false;
-    loadAll();
-  }, 5000);
+  btn.innerHTML = "⏳ RUNNING..."; btn.disabled = true;
+  const r = await apiFetch("/api/run", {method:"POST"});
+  showToast(r?.message || "▶ Bot triggered");
+  setTimeout(() => { btn.innerHTML = '<span>▶</span> RUN BOT NOW'; btn.disabled = false; loadAll(); }, 5000);
 }
 
 async function togglePause() {
-  const settings = await apiFetch("/api/settings");
-  const paused = !settings?.paused;
-  await apiFetch("/api/settings", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ paused })
-  });
+  const s = await apiFetch("/api/settings");
+  const paused = !s?.paused;
+  await apiFetch("/api/settings", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({paused})});
   document.getElementById("pause-label").textContent = paused ? "RESUME BOT" : "PAUSE BOT";
   showToast(paused ? "⏸ Bot paused" : "▶️ Bot resumed");
 }
@@ -451,67 +696,38 @@ function drawChart(pl) {
   const canvas = document.getElementById("plChart");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
-  canvas.width = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
-
-  const min = Math.min(...pl, 0);
-  const max = Math.max(...pl, 0);
-  const range = max - min || 1;
+  canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+  const min = Math.min(...pl, 0), max = Math.max(...pl, 0), range = max - min || 1;
   const w = canvas.width, h = canvas.height, pad = 10;
-  const x = i => pad + (i / (pl.length - 1)) * (w - pad * 2);
-  const y = v => h - pad - ((v - min) / range) * (h - pad * 2);
-
-  const grad = ctx.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, "rgba(200,241,53,0.3)");
-  grad.addColorStop(1, "rgba(200,241,53,0)");
-
-  ctx.beginPath();
-  ctx.moveTo(x(0), y(pl[0]));
-  pl.forEach((v, i) => { if (i > 0) ctx.lineTo(x(i), y(v)); });
-  ctx.lineTo(x(pl.length - 1), h);
-  ctx.lineTo(x(0), h);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(x(0), y(pl[0]));
-  pl.forEach((v, i) => { if (i > 0) ctx.lineTo(x(i), y(v)); });
-  ctx.strokeStyle = "#c8f135";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  pl.forEach((v, i) => {
-    ctx.beginPath();
-    ctx.arc(x(i), y(v), 3, 0, Math.PI * 2);
-    ctx.fillStyle = v >= 0 ? "#c8f135" : "#ff4d4d";
-    ctx.fill();
-  });
+  const x = i => pad + (i / Math.max(pl.length-1,1)) * (w - pad*2);
+  const y = v => h - pad - ((v-min)/range) * (h - pad*2);
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,"rgba(200,241,53,0.3)"); grad.addColorStop(1,"rgba(200,241,53,0)");
+  ctx.beginPath(); ctx.moveTo(x(0), y(pl[0]));
+  pl.forEach((v,i) => { if(i>0) ctx.lineTo(x(i),y(v)); });
+  ctx.lineTo(x(pl.length-1),h); ctx.lineTo(x(0),h); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x(0),y(pl[0]));
+  pl.forEach((v,i) => { if(i>0) ctx.lineTo(x(i),y(v)); });
+  ctx.strokeStyle="#c8f135"; ctx.lineWidth=2; ctx.stroke();
+  pl.forEach((v,i) => { ctx.beginPath(); ctx.arc(x(i),y(v),3,0,Math.PI*2); ctx.fillStyle=v>=0?"#c8f135":"#ff4d4d"; ctx.fill(); });
 }
-
-window.addEventListener("resize", () => {
-  const s = document.getElementById("stat-pl").textContent;
-  // redraw only if we have data
-});
 
 // ── Toast ──
-function showToast(msg, color = "var(--accent)") {
+function showToast(msg, color="var(--accent)") {
   const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.style.borderColor = color;
-  t.style.color = color;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
+  t.textContent = msg; t.style.borderColor = color; t.style.color = color;
+  t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3000);
 }
 
-function log(msg) { console.log("[BetBot]", msg); }
-
-// ── Auto-refresh every 60s ──
+// ── API endpoint for upcoming ──
+// Add to api.py: GET /api/upcoming → returns upcoming.json
+// Auto-refresh
 setInterval(loadAll, 60000);
 
-// ── Init ──
+// Init
 if (API_BASE) loadAll();
-else showToast("🔌 Enter your Railway URL above to connect", "var(--accent3)");
+else showToast("🔌 Enter your Railway URL above", "var(--accent3)");
 </script>
 </body>
 </html>
