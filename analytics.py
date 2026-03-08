@@ -3,8 +3,7 @@ Analytics Engine
 - Daily/weekly/monthly P&L reports
 - Win/loss streaks
 - ROI by confidence level
-- Best bet types and leagues
-- Telegram report summaries
+- Telegram report summary
 """
 
 import json
@@ -23,291 +22,215 @@ def load_history():
         return []
 
 
-def filter_period(history, days):
-    cutoff = datetime.utcnow() - timedelta(days=days)
-    result = []
+# ─────────────────────────────────────────
+# P&L REPORTS
+# ─────────────────────────────────────────
+
+def get_pl_report(period="daily"):
+    history = load_history()
+    if not history:
+        return None
+
+    now = datetime.utcnow()
+
+    if period == "daily":
+        cutoff = now - timedelta(days=1)
+        label = "Daily"
+    elif period == "weekly":
+        cutoff = now - timedelta(days=7)
+        label = "Weekly"
+    elif period == "monthly":
+        cutoff = now - timedelta(days=30)
+        label = "Monthly"
+    else:
+        cutoff = datetime.min
+        label = "All Time"
+
+    filtered = []
     for b in history:
         try:
-            dt = datetime.fromisoformat(b.get("date", "2000-01-01"))
-            if dt >= cutoff:
-                result.append(b)
+            date = datetime.strptime(b.get("date_full", b.get("date", "")), "%Y-%m-%d")
+            if date >= cutoff:
+                filtered.append(b)
         except:
-            pass
-    return result
+            filtered.append(b)
 
+    if not filtered:
+        return {"period": label, "total": 0, "wins": 0, "losses": 0,
+                "staked": 0, "returned": 0, "net_pl": 0, "win_rate": 0, "roi": 0}
 
-# ─────────────────────────────────────────
-# CORE STATS
-# ─────────────────────────────────────────
-
-def compute_stats(bets):
-    if not bets:
-        return {
-            "total": 0, "wins": 0, "losses": 0, "pending": 0,
-            "win_rate": 0, "total_staked": 0, "total_returned": 0,
-            "net_pl": 0, "roi": 0, "avg_odds": 0
-        }
-
-    settled = [b for b in bets if b.get("status") in ("win", "loss")]
-    wins = [b for b in settled if b["status"] == "win"]
-    losses = [b for b in settled if b["status"] == "loss"]
-    pending = [b for b in bets if b.get("status") == "pending"]
-
-    total_staked = sum(b.get("stake", 0) for b in settled)
-    total_returned = sum(b.get("return", 0) for b in wins)
-    net_pl = total_returned - total_staked
-    win_rate = round(len(wins) / len(settled) * 100, 1) if settled else 0
-    roi = round(net_pl / total_staked * 100, 1) if total_staked > 0 else 0
-    avg_odds = round(sum(b.get("odds", 0) for b in bets) / len(bets), 2) if bets else 0
+    total = len(filtered)
+    wins = sum(1 for b in filtered if b["status"] == "win")
+    losses = sum(1 for b in filtered if b["status"] == "loss")
+    staked = sum(b.get("stake", 0) for b in filtered)
+    returned = sum(b.get("return", 0) for b in filtered)
+    net_pl = returned - staked
+    win_rate = round(wins / total * 100, 1) if total else 0
+    roi = round(net_pl / staked * 100, 1) if staked else 0
 
     return {
-        "total": len(bets),
-        "settled": len(settled),
-        "wins": len(wins),
-        "losses": len(losses),
-        "pending": len(pending),
-        "win_rate": win_rate,
-        "total_staked": round(total_staked, 2),
-        "total_returned": round(total_returned, 2),
+        "period": label,
+        "total": total,
+        "wins": wins,
+        "losses": losses,
+        "pending": sum(1 for b in filtered if b["status"] == "pending"),
+        "staked": round(staked, 2),
+        "returned": round(returned, 2),
         "net_pl": round(net_pl, 2),
-        "roi": roi,
-        "avg_odds": avg_odds
+        "win_rate": win_rate,
+        "roi": roi
     }
 
 
 # ─────────────────────────────────────────
-# STREAK ANALYSIS
+# WIN/LOSS STREAKS
 # ─────────────────────────────────────────
 
-def compute_streaks(bets):
-    settled = [b for b in bets if b.get("status") in ("win", "loss")]
-    settled.sort(key=lambda b: b.get("date", ""))
+def get_streaks():
+    history = [b for b in load_history() if b["status"] in ("win", "loss")]
+    if not history:
+        return {"current_streak": 0, "current_type": None,
+                "best_win_streak": 0, "worst_loss_streak": 0, "streak_history": []}
 
-    current_streak = 0
-    current_type = None
-    max_win_streak = 0
-    max_loss_streak = 0
-    temp_win = 0
-    temp_loss = 0
+    current_streak = 1
+    current_type = history[-1]["status"]
+    best_win = 0
+    worst_loss = 0
+    temp = 1
 
-    for b in settled:
-        if b["status"] == "win":
-            temp_win += 1
-            temp_loss = 0
-            max_win_streak = max(max_win_streak, temp_win)
+    for i in range(len(history) - 2, -1, -1):
+        if history[i]["status"] == history[i + 1]["status"]:
+            if i == len(history) - 2:
+                current_streak += 1
+            temp += 1
         else:
-            temp_loss += 1
-            temp_win = 0
-            max_loss_streak = max(max_loss_streak, temp_loss)
+            if history[i + 1]["status"] == "win":
+                best_win = max(best_win, temp)
+            else:
+                worst_loss = max(worst_loss, temp)
+            temp = 1
 
-    # Current streak
-    for b in reversed(settled):
-        if current_type is None:
-            current_type = b["status"]
-            current_streak = 1
-        elif b["status"] == current_type:
-            current_streak += 1
-        else:
-            break
+    # Final
+    if history[-1]["status"] == "win":
+        best_win = max(best_win, current_streak)
+    else:
+        worst_loss = max(worst_loss, current_streak)
+
+    # Streak history (last 20)
+    streak_history = []
+    i = 0
+    bets = history[-20:]
+    while i < len(bets):
+        t = bets[i]["status"]
+        count = 1
+        while i + count < len(bets) and bets[i + count]["status"] == t:
+            count += 1
+        streak_history.append({"type": t, "count": count})
+        i += count
 
     return {
         "current_streak": current_streak,
-        "current_type": current_type or "none",
-        "max_win_streak": max_win_streak,
-        "max_loss_streak": max_loss_streak
+        "current_type": current_type,
+        "best_win_streak": best_win,
+        "worst_loss_streak": worst_loss,
+        "streak_history": streak_history
     }
 
 
 # ─────────────────────────────────────────
-# ROI BY CONFIDENCE LEVEL
+# ROI BY CONFIDENCE
 # ─────────────────────────────────────────
 
-def roi_by_confidence(bets):
+def get_roi_by_confidence():
+    history = load_history()
     buckets = {
-        "30-49": [], "50-64": [], "65-79": [], "80-100": []
+        "30-40%": {"wins": 0, "total": 0, "staked": 0, "returned": 0},
+        "40-50%": {"wins": 0, "total": 0, "staked": 0, "returned": 0},
+        "50-60%": {"wins": 0, "total": 0, "staked": 0, "returned": 0},
+        "60-70%": {"wins": 0, "total": 0, "staked": 0, "returned": 0},
+        "70-80%": {"wins": 0, "total": 0, "staked": 0, "returned": 0},
+        "80%+":   {"wins": 0, "total": 0, "staked": 0, "returned": 0},
     }
-    for b in bets:
-        conf = b.get("confidence", 0)
-        if conf < 50:
-            buckets["30-49"].append(b)
-        elif conf < 65:
-            buckets["50-64"].append(b)
-        elif conf < 80:
-            buckets["65-79"].append(b)
-        else:
-            buckets["80-100"].append(b)
 
-    result = {}
-    for label, group in buckets.items():
-        settled = [b for b in group if b.get("status") in ("win", "loss")]
-        if not settled:
-            result[label] = {"bets": 0, "win_rate": 0, "roi": 0}
-            continue
-        wins = sum(1 for b in settled if b["status"] == "win")
-        staked = sum(b.get("stake", 0) for b in settled)
-        returned = sum(b.get("return", 0) for b in settled if b["status"] == "win")
-        result[label] = {
-            "bets": len(settled),
-            "wins": wins,
-            "win_rate": round(wins / len(settled) * 100, 1),
-            "roi": round((returned - staked) / staked * 100, 1) if staked > 0 else 0
-        }
+    for b in history:
+        conf = b.get("avg_confidence", 50)
+        if conf < 40:   key = "30-40%"
+        elif conf < 50: key = "40-50%"
+        elif conf < 60: key = "50-60%"
+        elif conf < 70: key = "60-70%"
+        elif conf < 80: key = "70-80%"
+        else:           key = "80%+"
+
+        buckets[key]["total"] += 1
+        buckets[key]["staked"] += b.get("stake", 0)
+        buckets[key]["returned"] += b.get("return", 0)
+        if b["status"] == "win":
+            buckets[key]["wins"] += 1
+
+    result = []
+    for label, data in buckets.items():
+        if data["total"] > 0:
+            roi = round((data["returned"] - data["staked"]) / data["staked"] * 100, 1) if data["staked"] else 0
+            win_rate = round(data["wins"] / data["total"] * 100, 1)
+            result.append({
+                "confidence": label,
+                "total": data["total"],
+                "wins": data["wins"],
+                "win_rate": win_rate,
+                "roi": roi
+            })
+
     return result
 
 
 # ─────────────────────────────────────────
-# ROI BY BET TYPE
+# FULL REPORT (for Telegram)
 # ─────────────────────────────────────────
 
-def roi_by_bet_type(bets):
-    groups = defaultdict(list)
-    for b in bets:
-        for sel in b.get("selections", []):
-            bet_type = sel.get("recommended_bet", "unknown")
-            groups[bet_type].append({
-                "status": b.get("status"),
-                "stake": b.get("stake", 0) / max(len(b.get("selections", [1])), 1),
-                "return": b.get("return", 0) if b.get("status") == "win" else 0
-            })
+def generate_telegram_report(period="weekly"):
+    pl = get_pl_report(period)
+    streaks = get_streaks()
+    roi_conf = get_roi_by_confidence()
 
-    result = {}
-    for bet_type, items in groups.items():
-        settled = [i for i in items if i.get("status") in ("win", "loss")]
-        if not settled:
-            continue
-        wins = sum(1 for i in settled if i["status"] == "win")
-        staked = sum(i["stake"] for i in settled)
-        returned = sum(i["return"] for i in settled if i["status"] == "win")
-        result[bet_type] = {
-            "bets": len(settled),
-            "wins": wins,
-            "win_rate": round(wins / len(settled) * 100, 1),
-            "roi": round((returned - staked) / staked * 100, 1) if staked > 0 else 0
-        }
-    return dict(sorted(result.items(), key=lambda x: x[1]["roi"], reverse=True))
+    if not pl:
+        return "📊 No data available yet."
 
-
-# ─────────────────────────────────────────
-# ROI BY LEAGUE
-# ─────────────────────────────────────────
-
-def roi_by_league(bets):
-    groups = defaultdict(list)
-    for b in bets:
-        for sel in b.get("selections", []):
-            league = sel.get("league", "Unknown")
-            groups[league].append({
-                "status": b.get("status"),
-                "stake": b.get("stake", 0) / max(len(b.get("selections", [1])), 1),
-                "return": b.get("return", 0) if b.get("status") == "win" else 0
-            })
-
-    result = {}
-    for league, items in groups.items():
-        settled = [i for i in items if i.get("status") in ("win", "loss")]
-        if len(settled) < 2:
-            continue
-        wins = sum(1 for i in settled if i["status"] == "win")
-        staked = sum(i["stake"] for i in settled)
-        returned = sum(i["return"] for i in settled if i["status"] == "win")
-        result[league] = {
-            "bets": len(settled),
-            "wins": wins,
-            "win_rate": round(wins / len(settled) * 100, 1),
-            "roi": round((returned - staked) / staked * 100, 1) if staked > 0 else 0
-        }
-    return dict(sorted(result.items(), key=lambda x: x[1]["roi"], reverse=True)[:8])
-
-
-# ─────────────────────────────────────────
-# P&L CHART DATA
-# ─────────────────────────────────────────
-
-def pl_chart_data(bets, days=30):
-    bets = filter_period(bets, days)
-    bets.sort(key=lambda b: b.get("date", ""))
-
-    points = []
-    running = 0
-    for b in bets:
-        if b.get("status") == "win":
-            running += b.get("return", 0) - b.get("stake", 0)
-        elif b.get("status") == "loss":
-            running -= b.get("stake", 0)
-        points.append({
-            "date": b.get("date", "")[:10],
-            "pl": round(running, 2)
-        })
-    return points
-
-
-# ─────────────────────────────────────────
-# FULL REPORT
-# ─────────────────────────────────────────
-
-def generate_report(period="weekly"):
-    history = load_history()
-    days = {"daily": 1, "weekly": 7, "monthly": 30}.get(period, 7)
-    bets = filter_period(history, days)
-
-    return {
-        "period": period,
-        "generated_at": datetime.utcnow().isoformat(),
-        "stats": compute_stats(bets),
-        "streaks": compute_streaks(history),  # All-time streaks
-        "roi_by_confidence": roi_by_confidence(bets),
-        "roi_by_bet_type": roi_by_bet_type(bets),
-        "roi_by_league": roi_by_league(bets),
-        "pl_chart": pl_chart_data(history, days=30)
-    }
-
-
-# ─────────────────────────────────────────
-# TELEGRAM REPORT FORMATTER
-# ─────────────────────────────────────────
-
-def format_telegram_report(period="weekly"):
-    history = load_history()
-    days = {"daily": 1, "weekly": 7, "monthly": 30}.get(period, 7)
-    bets = filter_period(history, days)
-    stats = compute_stats(bets)
-    streaks = compute_streaks(history)
-    conf_roi = roi_by_confidence(bets)
-    bet_type_roi = roi_by_bet_type(bets)
-
-    period_label = {"daily": "📅 Today", "weekly": "📆 This Week", "monthly": "🗓 This Month"}.get(period, "📆 This Week")
-    pl_emoji = "🟢" if stats["net_pl"] >= 0 else "🔴"
-    streak_emoji = "🔥" if streaks["current_type"] == "win" else "❄️"
+    pl_sign = "+" if pl["net_pl"] >= 0 else ""
+    pl_emoji = "📈" if pl["net_pl"] >= 0 else "📉"
 
     lines = [
-        f"📊 *BetBot Report — {period_label}*",
-        "━━━━━━━━━━━━━━━",
-        f"🎯 Bets: *{stats['total']}* ({stats['wins']}W / {stats['losses']}L / {stats['pending']}P)",
-        f"📈 Win Rate: *{stats['win_rate']}%*",
-        f"💰 Staked: *€{stats['total_staked']}*",
-        f"{pl_emoji} Net P&L: *{'+'if stats['net_pl']>=0 else''}€{stats['net_pl']}*",
-        f"📉 ROI: *{stats['roi']}%*",
-        f"🎲 Avg Odds: *{stats['avg_odds']}x*",
-        "",
-        f"{streak_emoji} *Current Streak:* {streaks['current_streak']} {streaks['current_type'].upper()}",
-        f"🏆 Best Win Streak: {streaks['max_win_streak']}",
-        f"💀 Worst Loss Streak: {streaks['max_loss_streak']}",
+        f"📊 *{pl['period']} Report*\n",
+        f"🎰 Bets: *{pl['total']}* ({pl['wins']}W / {pl['losses']}L)",
+        f"📈 Win Rate: *{pl['win_rate']}%*",
+        f"💰 Staked: *€{pl['staked']}*",
+        f"💵 Returned: *€{pl['returned']}*",
+        f"{pl_emoji} Net P&L: *{pl_sign}€{pl['net_pl']}*",
+        f"📊 ROI: *{pl_sign}{pl['roi']}%*\n",
+        f"🔥 *Streaks*",
+        f"Current: *{streaks['current_streak']} {streaks['current_type'] or 'N/A'}{'s' if streaks['current_streak'] > 1 else ''}*",
+        f"Best Win Streak: *{streaks['best_win_streak']}*",
+        f"Worst Loss Streak: *{streaks['worst_loss_streak']}*\n",
     ]
 
-    # ROI by confidence
-    if any(v["bets"] > 0 for v in conf_roi.values()):
-        lines += ["", "🎯 *ROI by Confidence*"]
-        for bucket, data in conf_roi.items():
-            if data["bets"] > 0:
-                roi_str = f"{'+'if data['roi']>=0 else''}{data['roi']}%"
-                lines.append(f"  `{bucket}%` → {roi_str} ({data['bets']} bets, {data['win_rate']}% WR)")
+    if roi_conf:
+        lines.append("🎯 *ROI by Confidence*")
+        for r in roi_conf:
+            roi_sign = "+" if r["roi"] >= 0 else ""
+            lines.append(f"`{r['confidence']}` — {r['win_rate']}% WR | {roi_sign}{r['roi']}% ROI ({r['total']} bets)")
 
-    # Best bet types
-    if bet_type_roi:
-        lines += ["", "🏅 *Best Bet Types*"]
-        for bet_type, data in list(bet_type_roi.items())[:3]:
-            roi_str = f"{'+'if data['roi']>=0 else''}{data['roi']}%"
-            lines.append(f"  `{bet_type.replace('_',' ').upper()}` → {roi_str} ({data['win_rate']}% WR)")
-
-    lines += ["━━━━━━━━━━━━━━━", f"_Generated {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC_"]
     return "\n".join(lines)
+
+
+# ─────────────────────────────────────────
+# API ENDPOINTS DATA
+# ─────────────────────────────────────────
+
+def get_full_analytics():
+    return {
+        "daily": get_pl_report("daily"),
+        "weekly": get_pl_report("weekly"),
+        "monthly": get_pl_report("monthly"),
+        "all_time": get_pl_report("all"),
+        "streaks": get_streaks(),
+        "roi_by_confidence": get_roi_by_confidence()
+    }
