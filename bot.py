@@ -38,7 +38,7 @@ class ResearchEngine:
     BASE = "https://v3.football.api-sports.io"
 
     def __init__(self):
-        self.headers = {"x-apisports-key": API_FOOTBALL_KEY}
+        self.headers = {"x-apisports-key": API_FOOTBALL_KEY.strip()}
 
     def _get(self, endpoint, params):
         r = requests.get(f"{self.BASE}/{endpoint}", headers=self.headers, params=params)
@@ -182,7 +182,7 @@ class OddsEngine:
     BASE = "https://api.the-odds-api.com/v4"
 
     def __init__(self):
-        self.key = ODDS_API_KEY
+        self.key = ODDS_API_KEY.strip()
 
     def get_odds(self, sport="soccer", regions="eu", markets="h2h,totals"):
         r = requests.get(f"{self.BASE}/sports/{sport}/odds", params={
@@ -390,8 +390,8 @@ class UnibetPlacer:
 
 class TelegramNotifier:
     def __init__(self):
-        self.token = TELEGRAM_TOKEN
-        self.chat_id = TELEGRAM_CHAT_ID
+        self.token = TELEGRAM_TOKEN.strip()
+        self.chat_id = TELEGRAM_CHAT_ID.strip()
         self.base = f"https://api.telegram.org/bot{self.token}"
 
     def send(self, message):
