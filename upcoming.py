@@ -31,7 +31,7 @@ LEAGUES = [
     {"id": 144, "name": "Pro League"},
 ]
 
-HIGH_CONFIDENCE_THRESHOLD = 65
+HIGH_CONFIDENCE_THRESHOLD = 35
 
 
 def api_get(endpoint, params):
@@ -219,8 +219,12 @@ def send_daily_preview():
     analyzed, high_confidence = scan_and_alert(days=7)
 
     if not analyzed:
-        send_telegram("📅 *Upcoming Preview*\n\nNo high confidence matches found for the next 7 days.")
+        send_telegram("📅 *Upcoming Preview*\n\nNo matches found. Check your API-Football key and rate limits.")
         return
+
+    # If nothing hits threshold, fall back to top 10 by confidence
+    if not high_confidence:
+        high_confidence = analyzed[:10]
 
     # Group by date
     by_date = {}
