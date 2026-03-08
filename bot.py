@@ -4,7 +4,7 @@ Automated Sports Betting Bot
 - Fetches odds via The Odds API
 - Builds bet slips automatically
 - Places bets on Unibet via Selenium
-- Sends Telegram notifications
+- Sends Telegram notifications (direct HTTP, no library)
 """
 
 import os
@@ -12,13 +12,14 @@ import time
 import json
 import logging
 import requests
-from datetime import datetime, timedelta
-from telegram import Bot
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from config import (
     ODDS_API_KEY, API_FOOTBALL_KEY, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID,
     UNIBET_USERNAME, UNIBET_PASSWORD, DEFAULT_STAKE, MIN_ODDS, MAX_LEGS,
@@ -108,8 +109,6 @@ class ResearchEngine:
 
         # H2H analysis
         if h2h:
-            home_wins = sum(1 for f in h2h if f["teams"]["home"]["winner"])
-            away_wins = sum(1 for f in h2h if f["teams"]["away"]["winner"])
             avg_goals = sum(
                 f["goals"]["home"] + f["goals"]["away"]
                 for f in h2h if f["goals"]["home"] is not None
@@ -156,13 +155,11 @@ class ResearchEngine:
                 pass
 
         # Injuries
-        key_injuries_home = len(home_inj)
-        key_injuries_away = len(away_inj)
-        if key_injuries_away > key_injuries_home:
+        if len(away_inj) > len(home_inj):
             confidence += 10
-            reasoning.append(f"Away team has {key_injuries_away} injuries vs home {key_injuries_home}")
+            reasoning.append(f"Away team has {len(away_inj)} injuries vs home {len(home_inj)}")
 
-        # Determine bet type based on confidence and data
+        # Determine bet type
         if confidence >= 50:
             bet = "home_win"
         elif confidence >= 35:
@@ -187,7 +184,7 @@ class OddsEngine:
     def __init__(self):
         self.key = ODDS_API_KEY
 
-    def get_odds(self, sport="soccer", regions="eu", markets="h2h,totals,btts"):
+    def get_odds(self, sport="soccer", regions="eu", markets="h2h,totals"):
         r = requests.get(f"{self.BASE}/sports/{sport}/odds", params={
             "apiKey": self.key,
             "regions": regions,
@@ -198,7 +195,6 @@ class OddsEngine:
         return r.json()
 
     def find_odds_for_fixture(self, home, away, bet_type, odds_data):
-        """Find the best odds for a fixture and bet type."""
         for game in odds_data:
             if home.lower() in game["home_team"].lower() or away.lower() in game["away_team"].lower():
                 for bookmaker in game.get("bookmakers", []):
@@ -228,13 +224,12 @@ class SlipBuilder:
         self.odds = odds_engine
 
     def build_slip(self):
-        """Build an optimized bet slip from today's fixtures."""
         log.info("Building bet slip...")
         fixtures = self.research.get_fixtures_today()
         odds_data = self.odds.get_odds()
 
         selections = []
-        for fixture in fixtures[:20]:  # limit API calls
+        for fixture in fixtures[:20]:
             try:
                 analysis = self.research.analyze_fixture(fixture)
                 if analysis["confidence"] < MIN_CONFIDENCE_SCORE:
@@ -248,15 +243,11 @@ class SlipBuilder:
                 )
 
                 if odds and odds >= MIN_ODDS:
-                    selections.append({
-                        **analysis,
-                        "odds": odds
-                    })
+                    selections.append({**analysis, "odds": odds})
                     log.info(f"✅ Added: {analysis['home']} vs {analysis['away']} — {analysis['recommended_bet']} @ {odds}")
             except Exception as e:
                 log.warning(f"Skipped fixture: {e}")
 
-        # Sort by confidence, take top MAX_LEGS
         selections.sort(key=lambda x: x["confidence"], reverse=True)
         slip = selections[:MAX_LEGS]
 
@@ -290,7 +281,8 @@ class UnibetPlacer:
         opts.add_argument("--no-sandbox")
         opts.add_argument("--disable-dev-shm-usage")
         opts.add_argument("--window-size=1920,1080")
-        self.driver = webdriver.Chrome(options=opts)
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service, options=opts)
         self.wait = WebDriverWait(self.driver, 15)
 
     def login(self):
@@ -298,14 +290,12 @@ class UnibetPlacer:
         self.driver.get(self.URL)
         time.sleep(3)
 
-        # Click login button
         login_btn = self.wait.until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR, "[data-test='login-button'], .login-button, [class*='login']")
         ))
         login_btn.click()
         time.sleep(2)
 
-        # Enter credentials
         username = self.wait.until(EC.presence_of_element_located(
             (By.CSS_SELECTOR, "input[name='username'], input[type='email'], #username")
         ))
@@ -322,33 +312,24 @@ class UnibetPlacer:
         log.info("Logged in successfully.")
 
     def place_bet(self, slip):
-        """Place each selection on Unibet and build accumulator."""
         try:
             self.login()
-            selections = slip["selections"]
-
-            for sel in selections:
+            for sel in slip["selections"]:
                 self._add_selection(sel)
                 time.sleep(2)
-
             self._set_stake(slip["stake"])
             self._confirm_bet()
-            log.info(f"✅ Bet placed successfully! Stake: €{slip['stake']} | Potential: €{slip['potential_payout']}")
+            log.info(f"✅ Bet placed! Stake: €{slip['stake']} | Potential: €{slip['potential_payout']}")
             return True
         except Exception as e:
             log.error(f"❌ Failed to place bet: {e}")
-            self.driver.save_screenshot("/home/claude/betting-bot/error_screenshot.png")
+            self.driver.save_screenshot("error_screenshot.png")
             return False
         finally:
             self.driver.quit()
 
     def _add_selection(self, selection):
-        """Navigate to match and add selection to betslip."""
-        home = selection["home"].replace(" ", "+")
-        away = selection["away"].replace(" ", "+")
         bet_type = selection["recommended_bet"]
-
-        # Search for the match
         self.driver.get(f"{self.URL}/en/sports/football")
         time.sleep(2)
 
@@ -360,14 +341,12 @@ class UnibetPlacer:
             search.send_keys(selection["home"])
             time.sleep(2)
 
-            # Click first match result
             result = self.wait.until(EC.element_to_be_clickable(
                 (By.CSS_SELECTOR, ".search-result, .match-result, [class*='fixture']")
             ))
             result.click()
             time.sleep(2)
 
-            # Click the correct odds button
             if bet_type == "home_win":
                 odds_btn = self.wait.until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "[data-outcome='home'], .home-odds, [class*='home-win']")
@@ -387,7 +366,6 @@ class UnibetPlacer:
             log.warning(f"Could not add selection {selection['home']}: {e}")
 
     def _set_stake(self, stake):
-        """Set the stake amount in the betslip."""
         try:
             stake_input = self.wait.until(EC.presence_of_element_located(
                 (By.CSS_SELECTOR, "input[class*='stake'], input[name='stake'], .betslip-stake input")
@@ -399,7 +377,6 @@ class UnibetPlacer:
             log.error(f"Could not set stake: {e}")
 
     def _confirm_bet(self):
-        """Click the place bet button."""
         confirm = self.wait.until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR, "[class*='place-bet'], button[class*='confirm'], .betslip-submit")
         ))
@@ -408,17 +385,23 @@ class UnibetPlacer:
 
 
 # ─────────────────────────────────────────
-# 5. TELEGRAM NOTIFIER
+# 5. TELEGRAM NOTIFIER (direct HTTP)
 # ─────────────────────────────────────────
 
 class TelegramNotifier:
     def __init__(self):
-        self.bot = Bot(token=TELEGRAM_TOKEN)
+        self.token = TELEGRAM_TOKEN
         self.chat_id = TELEGRAM_CHAT_ID
+        self.base = f"https://api.telegram.org/bot{self.token}"
 
     def send(self, message):
         try:
-            self.bot.send_message(chat_id=self.chat_id, text=message, parse_mode="Markdown")
+            r = requests.post(f"{self.base}/sendMessage", json={
+                "chat_id": self.chat_id,
+                "text": message,
+                "parse_mode": "Markdown"
+            })
+            r.raise_for_status()
             log.info("Telegram notification sent.")
         except Exception as e:
             log.error(f"Telegram error: {e}")
@@ -446,7 +429,7 @@ class TelegramNotifier:
                 f"Odds: {slip['combined_odds']}"
             )
         else:
-            self.send("❌ *Bet placement failed!* Check logs.")
+            self.send("❌ *Bet placement failed!* Check GitHub Actions logs.")
 
 
 # ─────────────────────────────────────────
@@ -467,14 +450,11 @@ def run():
             notifier.send("⚠️ No qualifying bets found today.")
             return
 
-        # Notify slip built
         notifier.notify_slip(slip)
 
-        # Save slip to file
-        with open("/home/claude/betting-bot/last_slip.json", "w") as f:
+        with open("last_slip.json", "w") as f:
             json.dump(slip, f, indent=2)
 
-        # Place bet
         placer = UnibetPlacer()
         success = placer.place_bet(slip)
         notifier.notify_result(success, slip)
